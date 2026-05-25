@@ -3,8 +3,6 @@ module github.com/BingyanStudio/is-hust-online
 go 1.26.3
 
 require (
-	github.com/getsentry/sentry-go v0.46.2
-	github.com/getsentry/sentry-go/echo v0.46.2
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/labstack/echo/v5 v5.1.1
 	github.com/redis/go-redis/v9 v9.19.0
@@ -43,4 +41,5 @@ require (
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260226221140-a57be14db171 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

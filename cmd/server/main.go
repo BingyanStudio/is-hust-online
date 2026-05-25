@@ -1,7 +1,9 @@
-package main
+package server
 
 import (
+	"context"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -10,11 +12,12 @@ import (
 	"github.com/BingyanStudio/is-hust-online/internal/controller/param"
 	"github.com/BingyanStudio/is-hust-online/internal/db"
 	mymw "github.com/BingyanStudio/is-hust-online/internal/middleware"
+	"github.com/BingyanStudio/is-hust-online/internal/service"
 	"github.com/BingyanStudio/is-hust-online/internal/views"
-	"github.com/getsentry/sentry-go"
-	sentryecho "github.com/getsentry/sentry-go/echo"
+	myproto "github.com/BingyanStudio/is-hust-online/pkg/proto"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -51,8 +54,33 @@ func main() {
 	}
 	slog.Warn("Redis 连接成功")
 
-	// 启动数据维护和修补任务
+	// 初始化任务分发器和调度器
+	dispatcher := service.NewTaskDispatcher()
+	scheduler := service.NewScheduler(dispatcher)
+	scheduler.Start(context.Background())
 
+	// 启动 gRPC 服务器
+	go func() {
+		lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.C.GRPCPort))
+		if err != nil {
+			slog.Error("gRPC 监听失败", "error", err)
+			panic(err)
+		}
+
+		s := grpc.NewServer(
+			grpc.UnaryInterceptor(service.TokenAuthInterceptor()),
+		)
+
+		myproto.RegisterClientManagerServer(s, service.NewClientManagerService(dispatcher))
+		myproto.RegisterCheckServiceServer(s, service.NewCheckServiceService(dispatcher))
+
+		slog.Warn("gRPC 服务器启动", "port", config.C.GRPCPort)
+		if err := s.Serve(lis); err != nil {
+			slog.Error("gRPC 服务失败", "error", err)
+		}
+	}()
+
+	// 启动 HTTP 服务器
 	e := echo.NewWithConfig(echo.Config{
 		HTTPErrorHandler: mymw.CustomHTTPErrorHandler,
 		Validator:        param.GetValidator(),
@@ -70,17 +98,6 @@ func main() {
 		Logger: logger,
 	})
 
-	sampleRate := 0.3
-	if err := sentry.Init(sentry.ClientOptions{
-		Dsn:              config.C.SentryDsn,
-		EnableTracing:    true,
-		TracesSampleRate: sampleRate,
-		SendDefaultPII:   true,
-		EnableLogs:       true,
-	}); err != nil {
-		slog.Error("Sentry initialization failed", "error", err)
-	}
-
 	// TODO: 改为前端地址
 	e.Use(middleware.CORS("https://your-project.bingyan.net"))
 	e.Use(middleware.RequestID())
@@ -88,10 +105,6 @@ func main() {
 	e.Use(mymw.Logger())
 
 	e.Use(middleware.Recover())
-	e.Use(sentryecho.New(sentryecho.Options{
-		Repanic: true,
-	}))
-	e.Use(mymw.SentryUserMiddleware())
 
 	e.Use(middleware.Gzip())
 

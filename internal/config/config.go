@@ -29,13 +29,16 @@ type RedisConfig struct {
 }
 
 type AppConfig struct {
-	Captcha      CaptchaConfig `mapstructure:"captcha" json:"captcha" yaml:"captcha"`
-	Mongo        MongoConfig   `mapstructure:"mongo" json:"mongo" yaml:"mongo"`
-	Redis        RedisConfig   `mapstructure:"redis" json:"redis" yaml:"redis"`
-	Debug        bool          `mapstructure:"debug" json:"debug" yaml:"debug"`
-	Port         int           `mapstructure:"port" json:"port" yaml:"port"`
-	SkipperPaths []string      `mapstructure:"skipper_paths" json:"skipper_paths" yaml:"skipper_paths"`
-	SentryDsn    string        `mapstructure:"sentry_dsn" json:"sentry_dsn" yaml:"sentry_dsn"`
+	Captcha          CaptchaConfig `mapstructure:"captcha" json:"captcha" yaml:"captcha"`
+	Mongo            MongoConfig   `mapstructure:"mongo" json:"mongo" yaml:"mongo"`
+	Redis            RedisConfig   `mapstructure:"redis" json:"redis" yaml:"redis"`
+	Debug            bool          `mapstructure:"debug" json:"debug" yaml:"debug"`
+	Port             int           `mapstructure:"port" json:"port" yaml:"port"`
+	GRPCPort         int           `mapstructure:"grpc_port" json:"grpc_port" yaml:"grpc_port"`
+	BasicAuthUser    string        `mapstructure:"basic_auth_user" json:"basic_auth_user" yaml:"basic_auth_user"`
+	BasicAuthPassword string       `mapstructure:"basic_auth_password" json:"basic_auth_password" yaml:"basic_auth_password"`
+	SkipperPaths     []string      `mapstructure:"skipper_paths" json:"skipper_paths" yaml:"skipper_paths"`
+	SentryDsn        string        `mapstructure:"sentry_dsn" json:"sentry_dsn" yaml:"sentry_dsn"`
 }
 
 var C AppConfig
