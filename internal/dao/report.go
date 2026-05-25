@@ -24,7 +24,7 @@ func UpsertReport(ctx context.Context, report *model.Report) error {
 			"successes": report.Successes,
 		},
 		"$set": bson.M{
-			"uptime":   report.Uptime,
+			"uptime":    report.Uptime,
 			"avg_delay": report.AvgDelay,
 		},
 	}
@@ -34,13 +34,16 @@ func UpsertReport(ctx context.Context, report *model.Report) error {
 	return err
 }
 
-func FindReportsBySiteID(ctx context.Context, siteID string, reportType *int) ([]model.Report, error) {
+func FindReportsBySiteID(ctx context.Context, siteID string, reportType *int, page, pageSize int64) ([]model.Report, error) {
 	filter := bson.M{"site_id": siteID}
 	if reportType != nil {
 		filter["type"] = *reportType
 	}
 
-	opts := options.Find().SetSort(bson.M{"timeframe": -1})
+	opts := options.Find().
+		SetSkip((page - 1) * pageSize).
+		SetLimit(pageSize).
+		SetSort(bson.M{"timeframe": -1})
 
 	cursor, err := db.MongoDB.Collection(reportCollection).Find(ctx, filter, opts)
 	if err != nil {

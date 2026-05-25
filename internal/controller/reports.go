@@ -10,6 +10,11 @@ import (
 )
 
 func ListReports(c *echo.Context) error {
+	var pageParam param.PageParam
+	if err := c.Bind(&pageParam); err != nil {
+		return param.Error(c, http.StatusBadRequest, "invalid params", err)
+	}
+
 	siteID := c.QueryParam("site_id")
 	if siteID == "" {
 		return param.Error(c, http.StatusBadRequest, "site_id is required", nil)
@@ -24,7 +29,7 @@ func ListReports(c *echo.Context) error {
 		reportType = &t
 	}
 
-	reports, err := dao.FindReportsBySiteID(c.Request().Context(), siteID, reportType)
+	reports, err := dao.FindReportsBySiteID(c.Request().Context(), siteID, reportType, pageParam.Page, pageParam.PageSize)
 	if err != nil {
 		return param.Error(c, http.StatusInternalServerError, "failed to list reports", err)
 	}
