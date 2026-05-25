@@ -233,6 +233,7 @@ type CheckResponse struct {
 	Timestamp      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	ResponseTimeMs *int32                 `protobuf:"varint,5,opt,name=response_time_ms,json=responseTimeMs,proto3,oneof" json:"response_time_ms,omitempty"`
 	Extra          []byte                 `protobuf:"bytes,6,opt,name=extra,proto3,oneof" json:"extra,omitempty"`
+	CheckType      CheckType              `protobuf:"varint,7,opt,name=check_type,json=checkType,proto3,enum=net.bingyan.hust_uptime.v1.CheckType" json:"check_type,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -309,6 +310,13 @@ func (x *CheckResponse) GetExtra() []byte {
 	return nil
 }
 
+func (x *CheckResponse) GetCheckType() CheckType {
+	if x != nil {
+		return x.CheckType
+	}
+	return CheckType_CHECK_TYPE_UNKNOWN
+}
+
 type ServiceStatus struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	IsHealthy     bool                   `protobuf:"varint,1,opt,name=is_healthy,json=isHealthy,proto3" json:"is_healthy,omitempty"`
@@ -383,7 +391,7 @@ const file_net_bingyan_hust_uptime_v1_check_proto_rawDesc = "" +
 	"\x0ftimeout_seconds\x18\x05 \x01(\x05H\x00R\x0etimeoutSeconds\x88\x01\x01\x12\x19\n" +
 	"\x05extra\x18\x06 \x01(\fH\x01R\x05extra\x88\x01\x01B\x12\n" +
 	"\x10_timeout_secondsB\b\n" +
-	"\x06_extra\"\xa2\x02\n" +
+	"\x06_extra\"\xe8\x02\n" +
 	"\rCheckResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12D\n" +
@@ -391,7 +399,9 @@ const file_net_bingyan_hust_uptime_v1_check_proto_rawDesc = "" +
 	"error_type\x18\x03 \x01(\x0e2%.net.bingyan.hust_uptime.v1.ErrorTypeR\terrorType\x128\n" +
 	"\ttimestamp\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12-\n" +
 	"\x10response_time_ms\x18\x05 \x01(\x05H\x00R\x0eresponseTimeMs\x88\x01\x01\x12\x19\n" +
-	"\x05extra\x18\x06 \x01(\fH\x01R\x05extra\x88\x01\x01B\x13\n" +
+	"\x05extra\x18\x06 \x01(\fH\x01R\x05extra\x88\x01\x01\x12D\n" +
+	"\n" +
+	"check_type\x18\a \x01(\x0e2%.net.bingyan.hust_uptime.v1.CheckTypeR\tcheckTypeB\x13\n" +
 	"\x11_response_time_msB\b\n" +
 	"\x06_extra\"s\n" +
 	"\rServiceStatus\x12\x1d\n" +
@@ -443,11 +453,12 @@ var file_net_bingyan_hust_uptime_v1_check_proto_depIdxs = []int32{
 	0, // 0: net.bingyan.hust_uptime.v1.CheckRequest.check_type:type_name -> net.bingyan.hust_uptime.v1.CheckType
 	1, // 1: net.bingyan.hust_uptime.v1.CheckResponse.error_type:type_name -> net.bingyan.hust_uptime.v1.ErrorType
 	5, // 2: net.bingyan.hust_uptime.v1.CheckResponse.timestamp:type_name -> google.protobuf.Timestamp
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // 3: net.bingyan.hust_uptime.v1.CheckResponse.check_type:type_name -> net.bingyan.hust_uptime.v1.CheckType
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_net_bingyan_hust_uptime_v1_check_proto_init() }

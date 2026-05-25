@@ -33,9 +33,14 @@ func ValidateGeetest(lotNumber, captchaOutput, passToken, genTime string) (bool,
 
 	cli := http.Client{Timeout: time.Second * 5}
 	resp, err := cli.PostForm(ENDPOINT(), form_data)
-	if err != nil || resp.StatusCode != 200 {
-		slog.Error("请求极验验证接口失败", "error", err, "status_code", resp.StatusCode)
-		return true, nil
+	if err != nil {
+		slog.Error("请求极验验证接口失败", "error", err)
+		return false, nil
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		slog.Error("请求极验验证接口失败", "status_code", resp.StatusCode)
+		return false, nil
 	}
 
 	res_json, _ := io.ReadAll(resp.Body)
@@ -50,8 +55,8 @@ func ValidateGeetest(lotNumber, captchaOutput, passToken, genTime string) (bool,
 	if result == "success" {
 		return true, nil
 	} else {
-		reason := res_map["reason"].(string)
-		return false, new(reason)
+		reason, _ := res_map["reason"].(string)
+		return false, &reason
 	}
 }
 

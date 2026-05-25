@@ -6,7 +6,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	"github.com/BingyanStudio/is-hust-online/internal/config"
 	"github.com/BingyanStudio/is-hust-online/internal/controller/param"
@@ -54,28 +56,30 @@ func main() {
 	}
 	slog.Warn("Redis 连接成功")
 
+	// Context for coordinating shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// 初始化任务分发器和调度器
 	dispatcher := service.NewTaskDispatcher()
-	scheduler := service.NewScheduler(dispatcher)
-	scheduler.Start(context.Background())
+	scheduler := service.NewScheduler(ctx, dispatcher)
+	scheduler.Start()
 
 	// 启动 gRPC 服务器
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(service.TokenAuthInterceptor()),
+	)
+	myproto.RegisterClientManagerServer(grpcServer, service.NewClientManagerService(dispatcher))
+	myproto.RegisterCheckServiceServer(grpcServer, service.NewCheckServiceService(dispatcher))
+
 	go func() {
 		lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.C.GRPCPort))
 		if err != nil {
 			slog.Error("gRPC 监听失败", "error", err)
 			panic(err)
 		}
-
-		s := grpc.NewServer(
-			grpc.UnaryInterceptor(service.TokenAuthInterceptor()),
-		)
-
-		myproto.RegisterClientManagerServer(s, service.NewClientManagerService(dispatcher))
-		myproto.RegisterCheckServiceServer(s, service.NewCheckServiceService(dispatcher))
-
 		slog.Warn("gRPC 服务器启动", "port", config.C.GRPCPort)
-		if err := s.Serve(lis); err != nil {
+		if err := grpcServer.Serve(lis); err != nil {
 			slog.Error("gRPC 服务失败", "error", err)
 		}
 	}()
@@ -85,13 +89,18 @@ func main() {
 		HTTPErrorHandler: mymw.CustomHTTPErrorHandler,
 		Validator:        param.GetValidator(),
 		IPExtractor: func(r *http.Request) string {
-			xri := r.Header.Get(echo.HeaderXRealIP)
-			if xri != "" {
-				return xri
-			}
-			xff := r.Header.Get(echo.HeaderXForwardedFor)
-			if xff != "" {
+			if xff := r.Header.Get(echo.HeaderXForwardedFor); xff != "" {
+				// X-Forwarded-For may contain "client, proxy1, proxy2"
+				// Take the first IP (the original client)
+				for i, c := range xff {
+					if c == ',' {
+						return xff[:i]
+					}
+				}
 				return xff
+			}
+			if xri := r.Header.Get(echo.HeaderXRealIP); xri != "" {
+				return xri
 			}
 			return r.RemoteAddr
 		},
@@ -108,14 +117,35 @@ func main() {
 
 	e.Use(middleware.Gzip())
 
-	// defer db.CloseMongoDB()
-	// defer db.CloseRedisClient()
-
 	views.InitViews(e)
+
+	// Graceful shutdown
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-sigCh
+		slog.Info("shutting down...")
+
+		// Stop scheduler
+		scheduler.Stop()
+		cancel()
+
+		// Stop gRPC server
+		grpcServer.GracefulStop()
+
+		// Close database connections
+		if err := db.CloseMongoDB(); err != nil {
+			slog.Error("MongoDB close error", "error", err)
+		}
+		if err := db.CloseRedisClient(); err != nil {
+			slog.Error("Redis close error", "error", err)
+		}
+	}()
 
 	// 启动服务器
 	err = e.Start(":" + strconv.Itoa(config.C.Port))
-	if err != nil {
+	if err != nil && err != http.ErrServerClosed {
 		slog.Error("服务器启动失败", "error", err)
 		panic(err)
 	}

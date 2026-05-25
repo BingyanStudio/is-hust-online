@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/BingyanStudio/is-hust-online/internal/dao"
@@ -65,7 +66,7 @@ func (s *CheckServiceService) ReportResult(ctx context.Context, req *myproto.Che
 	check := &model.Check{
 		SiteID:   result.Id,
 		ClientID: req.ClientId,
-		Type:     myproto.CheckType(result.ErrorType), // store the check type from context
+		Type:     result.CheckType,
 		Status:   result.ErrorType,
 		Result:   buildResultString(result),
 		Delay:    int64(responseTimeMs),
@@ -113,13 +114,29 @@ func updateReports(ctx context.Context, siteID string, success bool, delay float
 			Timeframe: rt.timeframe,
 			Type:      rt.reportType,
 			Successes: successCount,
-			Uptime:    0, // will be recalculated
+			Uptime:    0,
 			AvgDelay:  delay,
 		}
 
 		if err := dao.UpsertReport(ctx, report); err != nil {
 			return err
 		}
+
+		// Recalculate uptime percentage after incrementing counters
+		RecalculateReportUptime(ctx, siteID, rt.timeframe, rt.reportType)
 	}
 	return nil
+}
+
+// RecalculateReportUptime recalculates the uptime percentage for a report
+// based on its current checks and successes counts.
+// This is called after UpsertReport to fix the uptime value.
+func RecalculateReportUptime(ctx context.Context, siteID, timeframe string, reportType int) {
+	rpt, err := dao.FindReport(ctx, siteID, timeframe, reportType)
+	if err != nil || rpt == nil || rpt.Checks == 0 {
+		return
+	}
+	uptime := (float64(rpt.Successes) / float64(rpt.Checks)) * 100
+	uptime = math.Round(uptime*100) / 100
+	dao.SetReportUptime(ctx, siteID, timeframe, reportType, uptime)
 }

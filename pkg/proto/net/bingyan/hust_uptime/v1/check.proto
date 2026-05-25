@@ -40,6 +40,7 @@ message CheckResponse {
   google.protobuf.Timestamp timestamp = 4;
   optional int32 response_time_ms = 5;
   optional bytes extra = 6;
+  CheckType check_type = 7;
 }
 
 message ServiceStatus {

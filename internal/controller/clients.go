@@ -39,6 +39,14 @@ func ListClients(c *echo.Context) error {
 		return param.Error(c, http.StatusInternalServerError, "failed to list clients", err)
 	}
 
+	authenticated, _ := c.Get("authenticated").(bool)
+	if !authenticated {
+		for i := range clients {
+			clients[i].Token = ""
+			clients[i].IP = ""
+		}
+	}
+
 	return param.SuccessWithPaging(c, clients, &pageParam, total)
 }
 
@@ -51,6 +59,12 @@ func GetClient(c *echo.Context) error {
 	client, err := dao.FindClientByID(c.Request().Context(), id)
 	if err != nil {
 		return param.Error(c, http.StatusNotFound, "client not found", err)
+	}
+
+	authenticated, _ := c.Get("authenticated").(bool)
+	if !authenticated {
+		client.Token = ""
+		client.IP = ""
 	}
 
 	return param.Success(c, client)

@@ -54,7 +54,7 @@ func (s *ClientManagerService) Register(ctx context.Context, req *myproto.Regist
 	}
 
 	clientID := client.ID.Hex()
-	s.dispatcher.RegisterClient(clientID)
+	s.dispatcher.RegisterClient(clientID, client.Capabilities)
 
 	slog.Info("client registered", "client_id", clientID, "name", client.Name, "ip", peerIP)
 

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"io"
 	"log/slog"
@@ -15,6 +16,7 @@ import (
 
 	myproto "github.com/BingyanStudio/is-hust-online/pkg/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -25,6 +27,7 @@ func main() {
 	token := flag.String("token", "", "authentication token")
 	capabilities := flag.String("capabilities", "http,ping,tcp", "comma-separated list of check capabilities (http, ping, tcp)")
 	location := flag.String("location", "default", "client location for geolocation-based checks")
+	insecureFlag := flag.Bool("insecure", false, "use insecure gRPC connection (no TLS)")
 	flag.Parse()
 
 	if *token == "" {
@@ -32,8 +35,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	var creds credentials.TransportCredentials
+	if *insecureFlag {
+		creds = insecure.NewCredentials()
+	} else {
+		creds = credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12})
+	}
+
 	conn, err := grpc.NewClient(*serverAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(creds),
 	)
 	if err != nil {
 		slog.Error("failed to connect", "error", err)
@@ -189,14 +199,19 @@ func performCheck(csClient myproto.CheckServiceClient, clientID string, task *my
 			Id:        check.Id,
 			Success:   false,
 			ErrorType: myproto.ErrorType_ERROR_TYPE_NO_ERROR,
+			CheckType: check.CheckType,
 		}
 	}
 
+	resp.CheckType = check.CheckType
 	elapsed := int32(time.Since(start).Milliseconds())
 	resp.ResponseTimeMs = &elapsed
 	resp.Timestamp = timestamppb.Now()
 
-	_, err := csClient.ReportResult(context.Background(), &myproto.CheckResultRequest{
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	_, err := csClient.ReportResult(ctx, &myproto.CheckResultRequest{
 		ClientId: clientID,
 		TaskId:   task.TaskId,
 		Result:   resp,

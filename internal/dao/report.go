@@ -24,13 +24,39 @@ func UpsertReport(ctx context.Context, report *model.Report) error {
 			"successes": report.Successes,
 		},
 		"$set": bson.M{
-			"uptime":    report.Uptime,
+			"uptime":   report.Uptime,
 			"avg_delay": report.AvgDelay,
 		},
 	}
 
 	opts := options.UpdateOne().SetUpsert(true)
 	_, err := db.MongoDB.Collection(reportCollection).UpdateOne(ctx, filter, update, opts)
+	return err
+}
+
+func FindReport(ctx context.Context, siteID, timeframe string, reportType int) (*model.Report, error) {
+	filter := bson.M{
+		"site_id":   siteID,
+		"timeframe": timeframe,
+		"type":      reportType,
+	}
+	var report model.Report
+	err := db.MongoDB.Collection(reportCollection).FindOne(ctx, filter).Decode(&report)
+	if err != nil {
+		return nil, err
+	}
+	return &report, nil
+}
+
+func SetReportUptime(ctx context.Context, siteID, timeframe string, reportType int, uptime float64) error {
+	filter := bson.M{
+		"site_id":   siteID,
+		"timeframe": timeframe,
+		"type":      reportType,
+	}
+	_, err := db.MongoDB.Collection(reportCollection).UpdateOne(ctx, filter, bson.M{
+		"$set": bson.M{"uptime": uptime},
+	})
 	return err
 }
 
