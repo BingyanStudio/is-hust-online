@@ -2,7 +2,11 @@ version: v2
 plugins:
   - remote: buf.build/protocolbuffers/go
     out: pkg/proto
-    opt: paths=source_relative
+    opt: 
+      - paths=import
+      - module=github.com/BingyanStudio/is-hust-online/pkg/proto
   - remote: buf.build/grpc/go
     out: pkg/proto
-    opt: paths=source_relative
+    opt: 
+      - paths=import
+      - module=github.com/BingyanStudio/is-hust-online/pkg/proto
