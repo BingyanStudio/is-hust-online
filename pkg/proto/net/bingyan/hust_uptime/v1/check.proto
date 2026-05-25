@@ -6,10 +6,11 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/BingyanStudio/is-hust-online/pkg/proto";
 
 enum CheckType {
-  CHECK_TYPE_HTTP = 0;
-  CHECK_TYPE_PING = 1;
-  CHECK_TYPE_TCP = 2;
-  CHECK_TYPE_OTHER = 3;
+  CHECK_TYPE_UNKNOWN = 0;
+  CHECK_TYPE_HTTP = 1;
+  CHECK_TYPE_PING = 2;
+  CHECK_TYPE_TCP = 4;
+  CHECK_TYPE_OTHER = 8;
 }
 
 enum ErrorType {

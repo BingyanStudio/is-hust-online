@@ -25,25 +25,28 @@ const (
 type CheckType int32
 
 const (
-	CheckType_CHECK_TYPE_HTTP  CheckType = 0
-	CheckType_CHECK_TYPE_PING  CheckType = 1
-	CheckType_CHECK_TYPE_TCP   CheckType = 2
-	CheckType_CHECK_TYPE_OTHER CheckType = 3
+	CheckType_CHECK_TYPE_UNKNOWN CheckType = 0
+	CheckType_CHECK_TYPE_HTTP    CheckType = 1
+	CheckType_CHECK_TYPE_PING    CheckType = 2
+	CheckType_CHECK_TYPE_TCP     CheckType = 4
+	CheckType_CHECK_TYPE_OTHER   CheckType = 8
 )
 
 // Enum value maps for CheckType.
 var (
 	CheckType_name = map[int32]string{
-		0: "CHECK_TYPE_HTTP",
-		1: "CHECK_TYPE_PING",
-		2: "CHECK_TYPE_TCP",
-		3: "CHECK_TYPE_OTHER",
+		0: "CHECK_TYPE_UNKNOWN",
+		1: "CHECK_TYPE_HTTP",
+		2: "CHECK_TYPE_PING",
+		4: "CHECK_TYPE_TCP",
+		8: "CHECK_TYPE_OTHER",
 	}
 	CheckType_value = map[string]int32{
-		"CHECK_TYPE_HTTP":  0,
-		"CHECK_TYPE_PING":  1,
-		"CHECK_TYPE_TCP":   2,
-		"CHECK_TYPE_OTHER": 3,
+		"CHECK_TYPE_UNKNOWN": 0,
+		"CHECK_TYPE_HTTP":    1,
+		"CHECK_TYPE_PING":    2,
+		"CHECK_TYPE_TCP":     4,
+		"CHECK_TYPE_OTHER":   8,
 	}
 )
 
@@ -205,7 +208,7 @@ func (x *CheckRequest) GetCheckType() CheckType {
 	if x != nil {
 		return x.CheckType
 	}
-	return CheckType_CHECK_TYPE_HTTP
+	return CheckType_CHECK_TYPE_UNKNOWN
 }
 
 func (x *CheckRequest) GetTimeoutSeconds() int32 {
@@ -407,12 +410,13 @@ const file_net_bingyan_hust_uptime_v1_check_proto_rawDesc = "" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12\x1d\n" +
 	"\amessage\x18\x03 \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
 	"\n" +
-	"\b_message*_\n" +
-	"\tCheckType\x12\x13\n" +
-	"\x0fCHECK_TYPE_HTTP\x10\x00\x12\x13\n" +
-	"\x0fCHECK_TYPE_PING\x10\x01\x12\x12\n" +
-	"\x0eCHECK_TYPE_TCP\x10\x02\x12\x14\n" +
-	"\x10CHECK_TYPE_OTHER\x10\x03*\xf7\x01\n" +
+	"\b_message*w\n" +
+	"\tCheckType\x12\x16\n" +
+	"\x12CHECK_TYPE_UNKNOWN\x10\x00\x12\x13\n" +
+	"\x0fCHECK_TYPE_HTTP\x10\x01\x12\x13\n" +
+	"\x0fCHECK_TYPE_PING\x10\x02\x12\x12\n" +
+	"\x0eCHECK_TYPE_TCP\x10\x04\x12\x14\n" +
+	"\x10CHECK_TYPE_OTHER\x10\b*\xf7\x01\n" +
 	"\tErrorType\x12\x17\n" +
 	"\x13ERROR_TYPE_NO_ERROR\x10\x00\x12\x1f\n" +
 	"\x1bERROR_TYPE_HTTP_UNREACHABLE\x10\x01\x12\x1b\n" +
