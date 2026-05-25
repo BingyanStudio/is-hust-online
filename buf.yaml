@@ -1,0 +1,11 @@
+version: v2
+modules:
+  - path: pkg/proto
+lint:
+  use:
+    - MINIMAL
+  except:
+    - PACKAGE_DIRECTORY_MATCH
+breaking:
+  use:
+    - FILE
