@@ -1,0 +1,27 @@
+syntax = "proto3";
+package net.bingyan.hust_uptime.v1;
+
+import "net/bingyan/hust_uptime/v1/check.proto";
+
+option go_package = "github.com/BingyanStudio/is-hust-online/pkg/proto";
+
+message WatchTasksRequest {
+  string client_id = 1;
+}
+
+message CheckTask {
+  string task_id = 1;
+  CheckRequest check = 2;
+  int64 assigned_at = 3;
+  optional int64 deadline = 4;
+}
+
+message CheckResultRequest {
+  string client_id = 1;
+  string task_id = 2;
+  CheckResponse result = 3;
+}
+
+message CheckResultResponse {
+  bool success = 1;
+}

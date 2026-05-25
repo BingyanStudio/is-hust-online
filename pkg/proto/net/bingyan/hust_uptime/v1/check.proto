@@ -1,0 +1,49 @@
+syntax = "proto3";
+package net.bingyan.hust_uptime.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/BingyanStudio/is-hust-online/pkg/proto";
+
+enum CheckType {
+  CHECK_TYPE_HTTP = 0;
+  CHECK_TYPE_PING = 1;
+  CHECK_TYPE_TCP = 2;
+  CHECK_TYPE_OTHER = 3;
+}
+
+enum ErrorType {
+  ERROR_TYPE_NO_ERROR = 0;
+  ERROR_TYPE_HTTP_UNREACHABLE = 1;
+  ERROR_TYPE_HTTP_TIMEOUT = 2;
+  ERROR_TYPE_HTTP_OTHER = 3;
+  ERROR_TYPE_PING_TIMEOUT = 4;
+  ERROR_TYPE_PING_UNREACHABLE = 5;
+  ERROR_TYPE_TCP_TIMEOUT = 6;
+  ERROR_TYPE_TCP_UNREACHABLE = 7;
+}
+
+message CheckRequest {
+  string id = 1;
+  string url = 2;
+  string method = 3;
+  CheckType check_type = 4;
+  optional int32 timeout_seconds = 5;
+  optional bytes extra = 6;
+}
+
+message CheckResponse {
+  string id = 1;
+  bool success = 2;
+  ErrorType error_type = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  optional int32 http_status_code = 5;
+  optional int32 response_time_ms = 6;
+  optional bytes extra = 7;
+}
+
+message ServiceStatus {
+  bool is_healthy = 1;
+  string version = 2;
+  optional string message = 3;
+}

@@ -1,0 +1,12 @@
+syntax = "proto3";
+package net.bingyan.hust_uptime.v1;
+
+import "net/bingyan/hust_uptime/v1/client.proto";
+
+option go_package = "github.com/BingyanStudio/is-hust-online/pkg/proto";
+
+service ClientManager {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  rpc Deregister(DeregisterRequest) returns (DeregisterResponse);
+}

@@ -1,0 +1,11 @@
+syntax = "proto3";
+package net.bingyan.hust_uptime.v1;
+
+import "net/bingyan/hust_uptime/v1/task.proto";
+
+option go_package = "github.com/BingyanStudio/is-hust-online/pkg/proto";
+
+service CheckService {
+  rpc WatchTasks(WatchTasksRequest) returns (stream CheckTask);
+  rpc ReportResult(CheckResultRequest) returns (CheckResultResponse);
+}
