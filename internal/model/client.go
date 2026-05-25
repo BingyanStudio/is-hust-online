@@ -20,4 +20,5 @@ type Client struct {
 	IP           string        `json:"ip" bson:"ip"`
 	LastOnline   int64         `json:"last_online" bson:"last_online"`
 	CreatedAt    int64         `json:"created_at" bson:"created_at"`
+	Labels       []string      `json:"labels" bson:"labels"`
 }

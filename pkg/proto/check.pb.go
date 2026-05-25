@@ -231,9 +231,8 @@ type CheckResponse struct {
 	Success        bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
 	ErrorType      ErrorType              `protobuf:"varint,3,opt,name=error_type,json=errorType,proto3,enum=net.bingyan.hust_uptime.v1.ErrorType" json:"error_type,omitempty"`
 	Timestamp      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	HttpStatusCode *int32                 `protobuf:"varint,5,opt,name=http_status_code,json=httpStatusCode,proto3,oneof" json:"http_status_code,omitempty"`
-	ResponseTimeMs *int32                 `protobuf:"varint,6,opt,name=response_time_ms,json=responseTimeMs,proto3,oneof" json:"response_time_ms,omitempty"`
-	Extra          []byte                 `protobuf:"bytes,7,opt,name=extra,proto3,oneof" json:"extra,omitempty"`
+	ResponseTimeMs *int32                 `protobuf:"varint,5,opt,name=response_time_ms,json=responseTimeMs,proto3,oneof" json:"response_time_ms,omitempty"`
+	Extra          []byte                 `protobuf:"bytes,6,opt,name=extra,proto3,oneof" json:"extra,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -294,13 +293,6 @@ func (x *CheckResponse) GetTimestamp() *timestamppb.Timestamp {
 		return x.Timestamp
 	}
 	return nil
-}
-
-func (x *CheckResponse) GetHttpStatusCode() int32 {
-	if x != nil && x.HttpStatusCode != nil {
-		return *x.HttpStatusCode
-	}
-	return 0
 }
 
 func (x *CheckResponse) GetResponseTimeMs() int32 {
@@ -391,17 +383,15 @@ const file_net_bingyan_hust_uptime_v1_check_proto_rawDesc = "" +
 	"\x0ftimeout_seconds\x18\x05 \x01(\x05H\x00R\x0etimeoutSeconds\x88\x01\x01\x12\x19\n" +
 	"\x05extra\x18\x06 \x01(\fH\x01R\x05extra\x88\x01\x01B\x12\n" +
 	"\x10_timeout_secondsB\b\n" +
-	"\x06_extra\"\xe6\x02\n" +
+	"\x06_extra\"\xa2\x02\n" +
 	"\rCheckResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12D\n" +
 	"\n" +
 	"error_type\x18\x03 \x01(\x0e2%.net.bingyan.hust_uptime.v1.ErrorTypeR\terrorType\x128\n" +
 	"\ttimestamp\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12-\n" +
-	"\x10http_status_code\x18\x05 \x01(\x05H\x00R\x0ehttpStatusCode\x88\x01\x01\x12-\n" +
-	"\x10response_time_ms\x18\x06 \x01(\x05H\x01R\x0eresponseTimeMs\x88\x01\x01\x12\x19\n" +
-	"\x05extra\x18\a \x01(\fH\x02R\x05extra\x88\x01\x01B\x13\n" +
-	"\x11_http_status_codeB\x13\n" +
+	"\x10response_time_ms\x18\x05 \x01(\x05H\x00R\x0eresponseTimeMs\x88\x01\x01\x12\x19\n" +
+	"\x05extra\x18\x06 \x01(\fH\x01R\x05extra\x88\x01\x01B\x13\n" +
 	"\x11_response_time_msB\b\n" +
 	"\x06_extra\"s\n" +
 	"\rServiceStatus\x12\x1d\n" +

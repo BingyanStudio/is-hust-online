@@ -38,9 +38,8 @@ message CheckResponse {
   bool success = 2;
   ErrorType error_type = 3;
   google.protobuf.Timestamp timestamp = 4;
-  optional int32 http_status_code = 5;
-  optional int32 response_time_ms = 6;
-  optional bytes extra = 7;
+  optional int32 response_time_ms = 5;
+  optional bytes extra = 6;
 }
 
 message ServiceStatus {
