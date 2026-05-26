@@ -12,24 +12,18 @@ import (
 )
 
 type CreateSiteRequest struct {
-	Name          string `json:"name" validate:"required"`
-	URL           string `json:"url" validate:"required"`
-	CheckType     int32  `json:"check_type" validate:"required"`
-	CheckInterval string `json:"check_interval" validate:"required"`
-	CheckExtra    string `json:"check_extra"`
-	Type          string `json:"type"`
-	Description   string `json:"description"`
+	Name        string `json:"name" validate:"required"`
+	URL         string `json:"url" validate:"required"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
 }
 
 type UpdateSiteRequest struct {
-	Name          *string `json:"name"`
-	URL           *string `json:"url"`
-	CheckType     *int32  `json:"check_type"`
-	CheckInterval *string `json:"check_interval"`
-	CheckExtra    *string `json:"check_extra"`
-	Type          *string `json:"type"`
-	Description   *string `json:"description"`
-	Status        *int    `json:"status"`
+	Name        *string `json:"name"`
+	URL         *string `json:"url"`
+	Type        *string `json:"type"`
+	Description *string `json:"description"`
+	Status      *int    `json:"status"`
 }
 
 func ListSites(c *echo.Context) error {
@@ -70,15 +64,12 @@ func CreateSite(c *echo.Context) error {
 	}
 
 	site := &model.Site{
-		Name:          req.Name,
-		URL:           req.URL,
-		CheckType:     req.CheckType,
-		CheckInterval: req.CheckInterval,
-		CheckExtra:    req.CheckExtra,
-		Type:          req.Type,
-		Description:   req.Description,
-		Status:        model.SITE_STATUS_ENABLED,
-		CreatedAt:     time.Now().Unix(),
+		Name:        req.Name,
+		URL:         req.URL,
+		Type:        req.Type,
+		Description: req.Description,
+		Status:      model.SITE_STATUS_ENABLED,
+		CreatedAt:   time.Now().Unix(),
 	}
 
 	if err := dao.InsertSite(c.Request().Context(), site); err != nil {
@@ -105,15 +96,6 @@ func UpdateSite(c *echo.Context) error {
 	}
 	if req.URL != nil {
 		update["url"] = *req.URL
-	}
-	if req.CheckType != nil {
-		update["check_type"] = *req.CheckType
-	}
-	if req.CheckInterval != nil {
-		update["check_interval"] = *req.CheckInterval
-	}
-	if req.CheckExtra != nil {
-		update["check_extra"] = *req.CheckExtra
 	}
 	if req.Type != nil {
 		update["type"] = *req.Type
