@@ -3,3 +3,5 @@ cmd/*/config/**
 *.exe
 
 .vscode/
+
+.superpowers

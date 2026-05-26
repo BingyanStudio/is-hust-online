@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Site, Report, Check } from '@/types'
+import type { Site, Check } from '@/types'
 import { listSites } from '@/api/sites'
 import { listReports } from '@/api/reports'
 import { listChecks } from '@/api/checks'
@@ -12,12 +12,11 @@ const sites = ref<Site[]>([])
 const loading = ref(false)
 
 interface SiteInfo {
-  site: Site
   monthlyUptime: number
   recentChecks: Check[]
 }
 
-const siteInfos = ref<Map<string, SiteInfo>>(new Map())
+const siteInfos = ref<Record<string, SiteInfo>>({})
 
 onMounted(async () => {
   loading.value = true
@@ -27,16 +26,19 @@ onMounted(async () => {
 
     await Promise.all(
       sites.value.map(async (site) => {
-        const [reports, checksRes] = await Promise.all([
-          listReports({ site_id: site.id, type: 1, page: 1, page_size: 1 }).catch(() => []),
-          listChecks({ site_id: site.id, page: 1, page_size: 10 }).catch(() => ({ items: [] as Check[] })),
-        ])
-        const monthlyUptime = reports.length > 0 ? reports[0]!.uptime : 0
-        siteInfos.value.set(site.id, {
-          site,
-          monthlyUptime,
-          recentChecks: checksRes.items,
-        })
+        try {
+          const [reports, checksRes] = await Promise.all([
+            listReports({ site_id: site.id, type: 1, page: 1, page_size: 1 }),
+            listChecks({ site_id: site.id, page: 1, page_size: 10 }),
+          ])
+          const monthlyUptime = Array.isArray(reports) && reports.length > 0 ? reports[0]!.uptime : 0
+          siteInfos.value[site.id] = {
+            monthlyUptime,
+            recentChecks: checksRes.items,
+          }
+        } catch {
+          siteInfos.value[site.id] = { monthlyUptime: 0, recentChecks: [] }
+        }
       }),
     )
   } catch {
@@ -47,11 +49,11 @@ onMounted(async () => {
 })
 
 const groupedSites = computed(() => {
-  const groups = new Map<string, Site[]>()
+  const groups: Record<string, Site[]> = {}
   for (const site of sites.value) {
     const type = site.type || 'Other'
-    if (!groups.has(type)) groups.set(type, [])
-    groups.get(type)!.push(site)
+    if (!groups[type]) groups[type] = []
+    groups[type].push(site)
   }
   return groups
 })
@@ -79,7 +81,7 @@ const slaColor = (uptime: number) => {
 
     <div v-loading="loading">
       <template v-if="sites.length > 0">
-        <div v-for="[type, groupSites] in groupedSites" :key="type" style="margin-bottom: 32px;">
+        <div v-for="(groupSites, type) in groupedSites" :key="type" style="margin-bottom: 32px;">
           <h2 style="font-size: 15px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
             {{ type }}
           </h2>
@@ -98,17 +100,17 @@ const slaColor = (uptime: number) => {
                 <div style="font-weight: 500;">{{ site.name }}</div>
                 <div style="font-size: 12px; color: #888;">{{ site.url }}</div>
               </div>
-              <div v-if="siteInfos.get(site.id)" style="text-align: right;">
+              <div v-if="siteInfos[site.id]" style="text-align: right;">
                 <div style="font-size: 12px; color: #888;">Monthly SLA</div>
-                <div style="font-size: 18px; font-weight: 600;" :style="{ color: slaColor(siteInfos.get(site.id)!.monthlyUptime) }">
-                  {{ siteInfos.get(site.id)!.monthlyUptime.toFixed(2) }}%
+                <div style="font-size: 18px; font-weight: 600;" :style="{ color: slaColor(siteInfos[site.id]!.monthlyUptime) }">
+                  {{ siteInfos[site.id]!.monthlyUptime.toFixed(2) }}%
                 </div>
               </div>
             </div>
 
-            <div v-if="siteInfos.get(site.id)" style="display: flex; gap: 3px; align-items: flex-end; height: 28px;">
+            <div v-if="siteInfos[site.id]" style="display: flex; gap: 3px; align-items: flex-end; height: 28px;">
               <div
-                v-for="(check, idx) in siteInfos.get(site.id)!.recentChecks"
+                v-for="(check, idx) in siteInfos[site.id]!.recentChecks"
                 :key="idx"
                 :style="{
                   width: '100%',
@@ -121,7 +123,7 @@ const slaColor = (uptime: number) => {
                 :title="`${new Date(check.timestamp * 1000).toLocaleString()} - ${check.status === 0 ? 'OK' : 'Error'}`"
               />
               <div
-                v-if="siteInfos.get(site.id)!.recentChecks.length === 0"
+                v-if="siteInfos[site.id] && siteInfos[site.id]!.recentChecks.length === 0"
                 style="flex: 1; height: 4px; background: #e5e7eb; border-radius: 2px;"
               />
             </div>

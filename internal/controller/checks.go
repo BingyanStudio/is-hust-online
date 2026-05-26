@@ -17,10 +17,18 @@ func ListChecks(c *echo.Context) error {
 
 	filter := bson.M{}
 	if siteID := c.QueryParam("site_id"); siteID != "" {
-		filter["site_id"] = siteID
+		if siteIDObj, err := bson.ObjectIDFromHex(siteID); err != nil {
+			return param.Error(c, http.StatusBadRequest, "invalid site_id", nil)
+		} else {
+			filter["site_id"] = siteIDObj
+		}
 	}
 	if clientID := c.QueryParam("client_id"); clientID != "" {
-		filter["client_id"] = clientID
+		if clientIDObj, err := bson.ObjectIDFromHex(clientID); err != nil {
+			return param.Error(c, http.StatusBadRequest, "invalid client_id", nil)
+		} else {
+			filter["client_id"] = clientIDObj
+		}
 	}
 
 	checks, total, err := dao.FindChecks(c.Request().Context(), filter, pageParam.Page, pageParam.PageSize)

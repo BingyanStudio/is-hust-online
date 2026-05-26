@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { CheckConfig, Site, Client, PaginatedResponse } from '@/types'
 import { listCheckConfigs, createCheckConfig, updateCheckConfig, deleteCheckConfig } from '@/api/checkConfigs'
 import { listSites } from '@/api/sites'
 import { listClients } from '@/api/clients'
+import { loggedIn } from '@/api/client'
 
 const data = ref<CheckConfig[]>([])
 const sites = ref<Site[]>([])
@@ -51,10 +52,12 @@ const loadOptions = async () => {
   }
 }
 
-onMounted(() => {
-  fetchData()
-  loadOptions()
-})
+watch(loggedIn, (v) => {
+  if (v) {
+    fetchData()
+    loadOptions()
+  }
+}, { immediate: true })
 
 const siteName = (id: string) => sites.value.find((s) => s.id === id)?.name || id
 const clientName = (id: string) => clients.value.find((c) => c.id === id)?.name || id

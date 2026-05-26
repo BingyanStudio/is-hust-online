@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { Client, PaginatedResponse } from '@/types'
 import { listClients, createClient, updateClient, deleteClient } from '@/api/clients'
+import { loggedIn } from '@/api/client'
 
 const data = ref<Client[]>([])
 const loading = ref(false)
@@ -45,7 +46,7 @@ const fetchData = async () => {
   }
 }
 
-onMounted(fetchData)
+watch(loggedIn, (v) => { if (v) fetchData() }, { immediate: true })
 
 const openCreate = () => {
   editingClient.value = null

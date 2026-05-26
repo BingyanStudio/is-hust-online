@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"io"
 	"log/slog"
 	"net"
@@ -23,25 +22,24 @@ import (
 )
 
 func main() {
-	serverAddr := flag.String("server", "localhost:9090", "gRPC server address")
-	token := flag.String("token", "", "authentication token")
-	capabilities := flag.String("capabilities", "http,ping,tcp", "comma-separated list of check capabilities (http, ping, tcp)")
-	insecureFlag := flag.Bool("insecure", false, "use insecure gRPC connection (no TLS)")
-	flag.Parse()
+	serverAddr := envOrDefault("SERVER", "localhost:9090")
+	token := envOrDefault("TOKEN", "")
+	capabilities := envOrDefault("CAPABILITIES", "http,ping,tcp")
+	useInsecure := envOrDefault("INSECURE", "false") == "true"
 
-	if *token == "" {
+	if token == "" {
 		slog.Error("token is required")
 		os.Exit(1)
 	}
 
 	var creds credentials.TransportCredentials
-	if *insecureFlag {
+	if useInsecure {
 		creds = insecure.NewCredentials()
 	} else {
 		creds = credentials.NewClientTLSFromCert(nil, "")
 	}
 
-	conn, err := grpc.NewClient(*serverAddr,
+	conn, err := grpc.NewClient(serverAddr,
 		grpc.WithTransportCredentials(creds),
 	)
 	if err != nil {
@@ -59,11 +57,11 @@ func main() {
 		slog.Warn("failed to retrieve public IP, using unknown", "error", err)
 		ip = "unknown"
 	}
-	md := metadata.Pairs("authorization", "Bearer "+*token)
+	md := metadata.Pairs("authorization", "Bearer "+token)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
 
 	caps := []myproto.CheckType{}
-	for _, cap := range splitAndTrim(*capabilities) {
+	for _, cap := range splitAndTrim(capabilities) {
 		switch cap {
 		case "http":
 			caps = append(caps, myproto.CheckType_CHECK_TYPE_HTTP)
@@ -133,7 +131,7 @@ func main() {
 					slog.Warn("stream ended", "error", err)
 					break
 				}
-				go performCheck(csClient, clientID, *token, task)
+				go performCheck(csClient, clientID, token, task)
 			}
 		}
 	}()
@@ -149,6 +147,13 @@ func main() {
 	deregCtx := metadata.NewOutgoingContext(context.Background(), md)
 	cmClient.Deregister(deregCtx, &myproto.DeregisterRequest{ClientId: clientID})
 	slog.Info("deregistered")
+}
+
+func envOrDefault(key, fallback string) string {
+	if v, ok := os.LookupEnv(key); ok {
+		return v
+	}
+	return fallback
 }
 
 func splitAndTrim(s string) []string {

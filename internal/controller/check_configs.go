@@ -36,10 +36,18 @@ func ListCheckConfigs(c *echo.Context) error {
 
 	filter := bson.M{}
 	if siteID := c.QueryParam("site_id"); siteID != "" {
-		filter["site_id"] = siteID
+		if siteIDObj, err := bson.ObjectIDFromHex(siteID); err != nil {
+			return param.Error(c, http.StatusBadRequest, "invalid site_id", nil)
+		} else {
+			filter["site_id"] = siteIDObj
+		}
 	}
 	if clientID := c.QueryParam("client_id"); clientID != "" {
-		filter["client_id"] = clientID
+		if clientIDObj, err := bson.ObjectIDFromHex(clientID); err != nil {
+			return param.Error(c, http.StatusBadRequest, "invalid client_id", nil)
+		} else {
+			filter["client_id"] = clientIDObj
+		}
 	}
 
 	ccs, total, err := dao.FindCheckConfigs(c.Request().Context(), filter, pageParam.Page, pageParam.PageSize)
@@ -128,7 +136,11 @@ func UpdateCheckConfig(c *echo.Context) error {
 
 	update := bson.M{}
 	if req.ClientID != nil {
-		update["client_id"] = *req.ClientID
+		if clientIDObj, err := bson.ObjectIDFromHex(*req.ClientID); err != nil {
+			return param.Error(c, http.StatusBadRequest, "invalid client_id", nil)
+		} else {
+			update["client_id"] = clientIDObj
+		}
 	}
 	if req.CheckType != nil {
 		update["check_type"] = *req.CheckType

@@ -8,6 +8,7 @@ import (
 	"github.com/BingyanStudio/is-hust-online/internal/dao"
 	"github.com/BingyanStudio/is-hust-online/internal/model"
 	"github.com/labstack/echo/v5"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func ListReports(c *echo.Context) error {
@@ -19,6 +20,11 @@ func ListReports(c *echo.Context) error {
 	siteID := c.QueryParam("site_id")
 	if siteID == "" {
 		return param.Error(c, http.StatusBadRequest, "site_id is required", nil)
+	}
+
+	siteIDObj, err := bson.ObjectIDFromHex(siteID)
+	if err != nil {
+		return param.Error(c, http.StatusBadRequest, "invalid site_id", err)
 	}
 
 	var reportType *int
@@ -33,7 +39,7 @@ func ListReports(c *echo.Context) error {
 		reportType = &t
 	}
 
-	reports, err := dao.FindReportsBySiteID(c.Request().Context(), siteID, reportType, pageParam.Page, pageParam.PageSize)
+	reports, err := dao.FindReportsBySiteID(c.Request().Context(), siteIDObj, reportType, pageParam.Page, pageParam.PageSize)
 	if err != nil {
 		return param.Error(c, http.StatusInternalServerError, "failed to list reports", err)
 	}

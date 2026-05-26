@@ -25,7 +25,7 @@ func UpsertReport(ctx context.Context, report *model.Report) error {
 			"successes": report.Successes,
 		},
 		"$set": bson.M{
-			"uptime":   report.Uptime,
+			"uptime":    report.Uptime,
 			"avg_delay": report.AvgDelay,
 		},
 	}
@@ -63,7 +63,7 @@ func SetReportUptime(ctx context.Context, siteID, checkConfigID bson.ObjectID, t
 	return err
 }
 
-func FindReportsBySiteID(ctx context.Context, siteID string, reportType *int, page, pageSize int64) ([]model.Report, error) {
+func FindReportsBySiteID(ctx context.Context, siteID bson.ObjectID, reportType *int, page, pageSize int64) ([]model.Report, error) {
 	filter := bson.M{"site_id": siteID}
 	if reportType != nil {
 		filter["type"] = *reportType

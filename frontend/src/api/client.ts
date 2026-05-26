@@ -1,17 +1,22 @@
 import axios from 'axios'
+import { ref } from 'vue'
 
 let authUsername = ''
 let authPassword = ''
 let onUnauthorized: (() => void) | null = null
 
+export const loggedIn = ref(false)
+
 export function setAuth(username: string, password: string) {
   authUsername = username
   authPassword = password
+  loggedIn.value = true
 }
 
 export function clearAuth() {
   authUsername = ''
   authPassword = ''
+  loggedIn.value = false
 }
 
 export function isAuthenticated() {

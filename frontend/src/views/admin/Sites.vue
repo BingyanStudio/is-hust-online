@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { Site, PaginatedResponse } from '@/types'
 import { listSites, createSite, updateSite, deleteSite } from '@/api/sites'
+import { loggedIn } from '@/api/client'
 import SiteStatusBadge from '@/components/SiteStatusBadge.vue'
 
 const data = ref<Site[]>([])
@@ -28,7 +29,7 @@ const fetchData = async () => {
   }
 }
 
-onMounted(fetchData)
+watch(loggedIn, (v) => { if (v) fetchData() }, { immediate: true })
 
 const openCreate = () => {
   editingSite.value = null
