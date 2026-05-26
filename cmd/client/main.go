@@ -161,7 +161,7 @@ func splitAndTrim(s string) []string {
 
 func retrieveIPv4Address() (string, error) {
 	// retrieve using ip.sb
-	resp, err := http.Get("https://api-ipv4.ip.sb/ip")
+	resp, err := http.Get("https://api.ipify.org/")
 	if err != nil {
 		return "", err
 	}
