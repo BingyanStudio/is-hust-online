@@ -1,3 +1,5 @@
 cmd/*/config/**
 
 *.exe
+
+.vscode/
