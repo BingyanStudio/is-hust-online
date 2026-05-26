@@ -80,8 +80,9 @@ type ClientInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Location      string                 `protobuf:"bytes,2,opt,name=location,proto3" json:"location,omitempty"`
-	Capabilities  []CheckType            `protobuf:"varint,3,rep,packed,name=capabilities,proto3,enum=net.bingyan.hust_uptime.v1.CheckType" json:"capabilities,omitempty"`
-	Labels        map[string]string      `protobuf:"bytes,4,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Ip            string                 `protobuf:"bytes,3,opt,name=ip,proto3" json:"ip,omitempty"`
+	Capabilities  []CheckType            `protobuf:"varint,4,rep,packed,name=capabilities,proto3,enum=net.bingyan.hust_uptime.v1.CheckType" json:"capabilities,omitempty"`
+	Labels        map[string]string      `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -126,6 +127,13 @@ func (x *ClientInfo) GetName() string {
 func (x *ClientInfo) GetLocation() string {
 	if x != nil {
 		return x.Location
+	}
+	return ""
+}
+
+func (x *ClientInfo) GetIp() string {
+	if x != nil {
+		return x.Ip
 	}
 	return ""
 }
@@ -444,13 +452,14 @@ var File_net_bingyan_hust_uptime_v1_client_proto protoreflect.FileDescriptor
 
 const file_net_bingyan_hust_uptime_v1_client_proto_rawDesc = "" +
 	"\n" +
-	"'net/bingyan/hust_uptime/v1/client.proto\x12\x1anet.bingyan.hust_uptime.v1\x1a&net/bingyan/hust_uptime/v1/check.proto\"\x8e\x02\n" +
+	"'net/bingyan/hust_uptime/v1/client.proto\x12\x1anet.bingyan.hust_uptime.v1\x1a&net/bingyan/hust_uptime/v1/check.proto\"\x9e\x02\n" +
 	"\n" +
 	"ClientInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
-	"\blocation\x18\x02 \x01(\tR\blocation\x12I\n" +
-	"\fcapabilities\x18\x03 \x03(\x0e2%.net.bingyan.hust_uptime.v1.CheckTypeR\fcapabilities\x12J\n" +
-	"\x06labels\x18\x04 \x03(\v22.net.bingyan.hust_uptime.v1.ClientInfo.LabelsEntryR\x06labels\x1a9\n" +
+	"\blocation\x18\x02 \x01(\tR\blocation\x12\x0e\n" +
+	"\x02ip\x18\x03 \x01(\tR\x02ip\x12I\n" +
+	"\fcapabilities\x18\x04 \x03(\x0e2%.net.bingyan.hust_uptime.v1.CheckTypeR\fcapabilities\x12J\n" +
+	"\x06labels\x18\x05 \x03(\v22.net.bingyan.hust_uptime.v1.ClientInfo.LabelsEntryR\x06labels\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Z\n" +

@@ -43,10 +43,20 @@ func (s *ClientManagerService) Register(ctx context.Context, req *myproto.Regist
 		peerIP = p.Addr.String()
 	}
 
+	cap := 0
+
+	for _, c := range req.ClientInfo.Capabilities {
+		cap |= int(c)
+	}
+
 	err = dao.UpdateClient(ctx, client.ID, bson.M{
-		"status":     0, // CLIENT_STATUS_ONLINE
-		"ip":         peerIP,
-		"last_online": time.Now().Unix(),
+		"status":       0, // CLIENT_STATUS_ONLINE
+		"ip":           req.ClientInfo.Ip,
+		"last_online":  time.Now().Unix(),
+		"location":     req.ClientInfo.Location,
+		"capabilities": cap,
+		"name":         req.ClientInfo.Name,
+		"labels":       req.ClientInfo.Labels,
 	})
 	if err != nil {
 		slog.Error("failed to update client on register", "error", err, "client_id", client.ID.Hex())
@@ -72,7 +82,7 @@ func (s *ClientManagerService) Heartbeat(ctx context.Context, req *myproto.Heart
 	}
 
 	err = dao.UpdateClient(ctx, clientID, bson.M{
-		"status":     int(req.Status),
+		"status":      int(req.Status),
 		"last_online": time.Now().Unix(),
 	})
 	if err != nil {
