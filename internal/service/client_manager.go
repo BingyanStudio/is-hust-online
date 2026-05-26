@@ -97,17 +97,6 @@ func (s *ClientManagerService) Heartbeat(ctx context.Context, req *myproto.Heart
 }
 
 func (s *ClientManagerService) Deregister(ctx context.Context, req *myproto.DeregisterRequest) (*myproto.DeregisterResponse, error) {
-	clientID, err := bson.ObjectIDFromHex(req.ClientId)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid client_id")
-	}
-
-	err = dao.UpdateClient(ctx, clientID, bson.M{
-		"status": 1, // CLIENT_STATUS_OFFLINE
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to deregister")
-	}
 
 	s.dispatcher.UnregisterClient(req.ClientId)
 

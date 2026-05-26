@@ -1,9 +1,12 @@
 package service
 
 import (
+	"context"
 	"sync"
 
+	"github.com/BingyanStudio/is-hust-online/internal/dao"
 	myproto "github.com/BingyanStudio/is-hust-online/pkg/proto"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 const taskChannelBuffer = 16
@@ -14,8 +17,8 @@ type clientEntry struct {
 }
 
 type TaskDispatcher struct {
-	mu       sync.RWMutex
-	clients  map[string]*clientEntry
+	mu      sync.RWMutex
+	clients map[string]*clientEntry
 }
 
 func NewTaskDispatcher() *TaskDispatcher {
@@ -42,6 +45,10 @@ func (d *TaskDispatcher) UnregisterClient(clientID string) {
 		close(entry.ch)
 		delete(d.clients, clientID)
 	}
+	clientID_o, _ := bson.ObjectIDFromHex(clientID)
+	_ = dao.UpdateClient(context.TODO(), clientID_o, bson.M{
+		"status": 1, // CLIENT_STATUS_OFFLINE
+	})
 }
 
 func (d *TaskDispatcher) Dispatch(clientID string, task *myproto.CheckTask) bool {
