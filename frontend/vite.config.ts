@@ -20,7 +20,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://is.hust.online',
+        target: 'http://localhost:3000',
         changeOrigin: true,
       },
     },

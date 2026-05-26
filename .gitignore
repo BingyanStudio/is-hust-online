@@ -6,5 +6,7 @@ cmd/*/config/**
 
 .superpowers
 
-frontend/dist/
-internal/frontend/dist/
+frontend/dist/*
+!frontend/dist/.gitkeep
+internal/frontend/dist/*
+!internal/frontend/dist/.gitkeep
