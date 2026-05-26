@@ -12,7 +12,7 @@ const loading = ref(false)
 onMounted(async () => {
   loading.value = true
   try {
-    const res = await listSites({ page_size: 20 })
+    const res = await listSites({ page: 1, page_size: 20 })
     sites.value = res.items
   } catch {
     sites.value = []

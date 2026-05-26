@@ -27,6 +27,7 @@ const loadData = async () => {
     reports.value = await listReports({
       site_id: props.siteId,
       type: granularity.value,
+      page: 1,
       page_size: 50,
     })
   } catch {

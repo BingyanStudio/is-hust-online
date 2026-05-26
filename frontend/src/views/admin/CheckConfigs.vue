@@ -41,8 +41,8 @@ const fetchData = async () => {
 const loadOptions = async () => {
   try {
     const [siteRes, clientRes] = await Promise.all([
-      listSites({ page_size: 50 }),
-      listClients({ page_size: 50 }),
+      listSites({ page: 1, page_size: 50 }),
+      listClients({ page: 1, page_size: 50 }),
     ])
     sites.value = siteRes.items
     clients.value = clientRes.items
