@@ -13,6 +13,7 @@ import (
 	"github.com/BingyanStudio/is-hust-online/internal/config"
 	"github.com/BingyanStudio/is-hust-online/internal/controller/param"
 	"github.com/BingyanStudio/is-hust-online/internal/db"
+	"github.com/BingyanStudio/is-hust-online/internal/frontend"
 	mymw "github.com/BingyanStudio/is-hust-online/internal/middleware"
 	"github.com/BingyanStudio/is-hust-online/internal/service"
 	"github.com/BingyanStudio/is-hust-online/internal/views"
@@ -133,6 +134,7 @@ func main() {
 	e.Use(middleware.Gzip())
 
 	views.InitViews(e)
+	views.InitStatic(e, frontend.Dist)
 
 	// Graceful shutdown
 	sigCh := make(chan os.Signal, 1)

@@ -5,3 +5,6 @@ cmd/*/config/**
 .vscode/
 
 .superpowers
+
+frontend/dist/
+internal/frontend/dist/
