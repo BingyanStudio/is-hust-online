@@ -28,6 +28,7 @@ func main() {
 	capabilities := flag.String("capabilities", "http,ping,tcp", "comma-separated list of check capabilities (http, ping, tcp)")
 	location := flag.String("location", "default", "client location for geolocation-based checks")
 	insecureFlag := flag.Bool("insecure", false, "use insecure gRPC connection (no TLS)")
+	name := flag.String("name", "default", "client name (optional, defaults to public IP)")
 	flag.Parse()
 
 	if *token == "" {
@@ -77,7 +78,8 @@ func main() {
 
 	regResp, err := cmClient.Register(ctx, &myproto.RegisterRequest{
 		ClientInfo: &myproto.ClientInfo{
-			Name:         ip,
+			Name:         *name,
+			Ip:           ip,
 			Location:     *location,
 			Capabilities: caps,
 		},
@@ -196,14 +198,16 @@ func performCheck(csClient myproto.CheckServiceClient, clientID string, task *my
 		resp = doTCPCheck(check)
 	default:
 		resp = &myproto.CheckResponse{
-			Id:        check.Id,
-			Success:   false,
-			ErrorType: myproto.ErrorType_ERROR_TYPE_NO_ERROR,
-			CheckType: check.CheckType,
+			Id:            check.Id,
+			Success:       false,
+			ErrorType:     myproto.ErrorType_ERROR_TYPE_NO_ERROR,
+			CheckType:     check.CheckType,
+			CheckConfigId: check.CheckConfigId,
 		}
 	}
 
 	resp.CheckType = check.CheckType
+	resp.CheckConfigId = check.CheckConfigId
 	elapsed := int32(time.Since(start).Milliseconds())
 	resp.ResponseTimeMs = &elapsed
 	resp.Timestamp = timestamppb.Now()
