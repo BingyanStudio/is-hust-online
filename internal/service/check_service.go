@@ -10,6 +10,7 @@ import (
 	"github.com/BingyanStudio/is-hust-online/internal/dao"
 	"github.com/BingyanStudio/is-hust-online/internal/model"
 	myproto "github.com/BingyanStudio/is-hust-online/pkg/proto"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -63,13 +64,25 @@ func (s *CheckServiceService) ReportResult(ctx context.Context, req *myproto.Che
 		responseTimeMs = result.GetResponseTimeMs()
 	}
 
+	siteID, err := bson.ObjectIDFromHex(result.Id)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid site id")
+	}
+	clientID, err := bson.ObjectIDFromHex(req.ClientId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid client id")
+	}
+
+	checkConfigID, _ := bson.ObjectIDFromHex(result.CheckConfigId)
+
 	check := &model.Check{
-		SiteID:   result.Id,
-		ClientID: req.ClientId,
-		Type:     result.CheckType,
-		Status:   result.ErrorType,
-		Result:   buildResultString(result),
-		Delay:    int64(responseTimeMs),
+		SiteID:        siteID,
+		ClientID:      clientID,
+		CheckConfigID: checkConfigID,
+		Type:          result.CheckType,
+		Status:        result.ErrorType,
+		Result:        buildResultString(result),
+		Delay:         int64(responseTimeMs),
 	}
 
 	if err := dao.InsertCheck(ctx, check); err != nil {
@@ -77,8 +90,7 @@ func (s *CheckServiceService) ReportResult(ctx context.Context, req *myproto.Che
 		return nil, status.Error(codes.Internal, "failed to save check result")
 	}
 
-	// Update report aggregation
-	if err := updateReports(ctx, result.Id, result.Success, float64(responseTimeMs)); err != nil {
+	if err := updateReports(ctx, siteID, checkConfigID, result.Success, float64(responseTimeMs)); err != nil {
 		slog.Error("failed to update report", "error", err)
 	}
 
@@ -92,7 +104,7 @@ func buildResultString(resp *myproto.CheckResponse) string {
 	return fmt.Sprintf("error: %s", resp.ErrorType.String())
 }
 
-func updateReports(ctx context.Context, siteID string, success bool, delay float64) error {
+func updateReports(ctx context.Context, siteID, checkConfigID bson.ObjectID, success bool, delay float64) error {
 	now := time.Now()
 	successCount := int64(0)
 	if success {
@@ -110,33 +122,30 @@ func updateReports(ctx context.Context, siteID string, success bool, delay float
 
 	for _, rt := range reportTypes {
 		report := &model.Report{
-			SiteID:    siteID,
-			Timeframe: rt.timeframe,
-			Type:      rt.reportType,
-			Successes: successCount,
-			Uptime:    0,
-			AvgDelay:  delay,
+			SiteID:        siteID,
+			CheckConfigID: checkConfigID,
+			Timeframe:     rt.timeframe,
+			Type:          rt.reportType,
+			Successes:     successCount,
+			Uptime:        0,
+			AvgDelay:      delay,
 		}
 
 		if err := dao.UpsertReport(ctx, report); err != nil {
 			return err
 		}
 
-		// Recalculate uptime percentage after incrementing counters
-		RecalculateReportUptime(ctx, siteID, rt.timeframe, rt.reportType)
+		RecalculateReportUptime(ctx, siteID, checkConfigID, rt.timeframe, rt.reportType)
 	}
 	return nil
 }
 
-// RecalculateReportUptime recalculates the uptime percentage for a report
-// based on its current checks and successes counts.
-// This is called after UpsertReport to fix the uptime value.
-func RecalculateReportUptime(ctx context.Context, siteID, timeframe string, reportType int) {
-	rpt, err := dao.FindReport(ctx, siteID, timeframe, reportType)
+func RecalculateReportUptime(ctx context.Context, siteID, checkConfigID bson.ObjectID, timeframe string, reportType int) {
+	rpt, err := dao.FindReport(ctx, siteID, checkConfigID, timeframe, reportType)
 	if err != nil || rpt == nil || rpt.Checks == 0 {
 		return
 	}
 	uptime := (float64(rpt.Successes) / float64(rpt.Checks)) * 100
 	uptime = math.Round(uptime*100) / 100
-	dao.SetReportUptime(ctx, siteID, timeframe, reportType, uptime)
+	dao.SetReportUptime(ctx, siteID, checkConfigID, timeframe, reportType, uptime)
 }

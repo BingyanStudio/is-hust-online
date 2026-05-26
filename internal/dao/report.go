@@ -13,9 +13,10 @@ const reportCollection = "reports"
 
 func UpsertReport(ctx context.Context, report *model.Report) error {
 	filter := bson.M{
-		"site_id":   report.SiteID,
-		"timeframe": report.Timeframe,
-		"type":      report.Type,
+		"site_id":         report.SiteID,
+		"check_config_id": report.CheckConfigID,
+		"timeframe":       report.Timeframe,
+		"type":            report.Type,
 	}
 
 	update := bson.M{
@@ -34,11 +35,12 @@ func UpsertReport(ctx context.Context, report *model.Report) error {
 	return err
 }
 
-func FindReport(ctx context.Context, siteID, timeframe string, reportType int) (*model.Report, error) {
+func FindReport(ctx context.Context, siteID, checkConfigID bson.ObjectID, timeframe string, reportType int) (*model.Report, error) {
 	filter := bson.M{
-		"site_id":   siteID,
-		"timeframe": timeframe,
-		"type":      reportType,
+		"site_id":         siteID,
+		"check_config_id": checkConfigID,
+		"timeframe":       timeframe,
+		"type":            reportType,
 	}
 	var report model.Report
 	err := db.MongoDB.Collection(reportCollection).FindOne(ctx, filter).Decode(&report)
@@ -48,11 +50,12 @@ func FindReport(ctx context.Context, siteID, timeframe string, reportType int) (
 	return &report, nil
 }
 
-func SetReportUptime(ctx context.Context, siteID, timeframe string, reportType int, uptime float64) error {
+func SetReportUptime(ctx context.Context, siteID, checkConfigID bson.ObjectID, timeframe string, reportType int, uptime float64) error {
 	filter := bson.M{
-		"site_id":   siteID,
-		"timeframe": timeframe,
-		"type":      reportType,
+		"site_id":         siteID,
+		"check_config_id": checkConfigID,
+		"timeframe":       timeframe,
+		"type":            reportType,
 	}
 	_, err := db.MongoDB.Collection(reportCollection).UpdateOne(ctx, filter, bson.M{
 		"$set": bson.M{"uptime": uptime},
