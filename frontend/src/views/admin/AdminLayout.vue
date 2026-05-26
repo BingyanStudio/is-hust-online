@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { setAuth, isAuthenticated, on401 } from '@/api/client'
+import { listSites } from '@/api/sites'
 
 const router = useRouter()
 const route = useRoute()
@@ -20,14 +21,25 @@ on401(() => {
   loginVisible.value = true
 })
 
-const handleLogin = () => {
+const loginLoading = ref(false)
+
+const handleLogin = async () => {
   if (!loginForm.value.username || !loginForm.value.password) {
     ElMessage.warning('Please enter username and password')
     return
   }
-  setAuth(loginForm.value.username, loginForm.value.password)
-  loginVisible.value = false
-  ElMessage.success('Logged in')
+  loginLoading.value = true
+  try {
+    setAuth(loginForm.value.username, loginForm.value.password)
+    await listSites({ page: 1, page_size: 1 })
+    loginVisible.value = false
+    ElMessage.success('Logged in')
+  } catch {
+    setAuth('', '')
+    ElMessage.error('Invalid username or password')
+  } finally {
+    loginLoading.value = false
+  }
 }
 
 const handleCancel = () => {
@@ -47,7 +59,7 @@ const handleCancel = () => {
     </el-form>
     <template #footer>
       <el-button @click="handleCancel">Cancel</el-button>
-      <el-button type="primary" @click="handleLogin">Login</el-button>
+      <el-button type="primary" :loading="loginLoading" @click="handleLogin">Login</el-button>
     </template>
   </el-dialog>
 

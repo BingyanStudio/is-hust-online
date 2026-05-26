@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { Client, PaginatedResponse } from '@/types'
 import { listClients, createClient, updateClient, deleteClient } from '@/api/clients'
@@ -10,9 +10,27 @@ const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
+const capabilityOptions = [
+  { value: 1, label: 'HTTP' },
+  { value: 2, label: 'PING' },
+  { value: 4, label: 'TCP' },
+  { value: 8, label: 'Other' },
+]
+
 const dialogVisible = ref(false)
 const editingClient = ref<Client | null>(null)
 const form = ref({ name: '', location: '', capabilities: 0, labels: [] as string[], status: 0 })
+const capabilityChecks = ref<number[]>([])
+
+const syncCapabilitiesToChecks = () => {
+  capabilityChecks.value = capabilityOptions
+    .filter((o) => (form.value.capabilities & o.value) !== 0)
+    .map((o) => o.value)
+}
+
+const syncChecksToCapabilities = () => {
+  form.value.capabilities = capabilityChecks.value.reduce((sum, v) => sum + v, 0)
+}
 
 const fetchData = async () => {
   loading.value = true
@@ -32,6 +50,7 @@ onMounted(fetchData)
 const openCreate = () => {
   editingClient.value = null
   form.value = { name: '', location: '', capabilities: 0, labels: [], status: 0 }
+  syncCapabilitiesToChecks()
   dialogVisible.value = true
 }
 
@@ -44,6 +63,7 @@ const openEdit = (client: Client) => {
     labels: [...client.labels],
     status: client.status,
   }
+  syncCapabilitiesToChecks()
   dialogVisible.value = true
 }
 
@@ -137,8 +157,12 @@ const formatTime = (ts: number) => ts ? new Date(ts * 1000).toLocaleString() : '
         <el-form-item label="Location">
           <el-input v-model="form.location" />
         </el-form-item>
-        <el-form-item label="Capabilities (bitmask)">
-          <el-input-number v-model="form.capabilities" :min="0" />
+        <el-form-item label="Capabilities">
+          <el-checkbox-group v-model="capabilityChecks" @change="syncChecksToCapabilities">
+            <el-checkbox v-for="opt in capabilityOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
         <el-form-item label="Status" v-if="editingClient">
           <el-select v-model="form.status">
