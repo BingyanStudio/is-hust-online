@@ -22,12 +22,19 @@ type MongoConfig struct {
 	Database string `mapstructure:"database" json:"database" yaml:"database"`
 }
 
+type GRPCConfig struct {
+	Port     int    `mapstructure:"port" json:"port" yaml:"port"`
+	CertFile string `mapstructure:"cert_file" json:"cert_file" yaml:"cert_file"`
+	KeyFile  string `mapstructure:"key_file" json:"key_file" yaml:"key_file"`
+	Insecure bool   `mapstructure:"insecure" json:"insecure" yaml:"insecure"`
+}
+
 type AppConfig struct {
 	Captcha           CaptchaConfig `mapstructure:"captcha" json:"captcha" yaml:"captcha"`
 	Mongo             MongoConfig   `mapstructure:"mongo" json:"mongo" yaml:"mongo"`
 	Debug             bool          `mapstructure:"debug" json:"debug" yaml:"debug"`
 	Port              int           `mapstructure:"port" json:"port" yaml:"port"`
-	GRPCPort          int           `mapstructure:"grpc_port" json:"grpc_port" yaml:"grpc_port"`
+	GRPC              GRPCConfig    `mapstructure:"grpc" json:"grpc" yaml:"grpc"`
 	BasicAuthUser     string        `mapstructure:"basic_auth_user" json:"basic_auth_user" yaml:"basic_auth_user"`
 	BasicAuthPassword string        `mapstructure:"basic_auth_password" json:"basic_auth_password" yaml:"basic_auth_password"`
 }

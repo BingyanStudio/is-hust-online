@@ -20,6 +20,7 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 func main() {
@@ -59,20 +60,40 @@ func main() {
 	scheduler.Start()
 
 	// 启动 gRPC 服务器
-	grpcServer := grpc.NewServer(
+
+	var grpcOpts []grpc.ServerOption
+
+	if !config.C.GRPC.Insecure {
+		if config.C.GRPC.CertFile == "" || config.C.GRPC.KeyFile == "" {
+			slog.Error("TLS 证书和密钥文件路径必须在非不安全模式下提供")
+			panic("TLS 证书和密钥文件路径必须在非不安全模式下提供")
+		}
+
+		creds, err := credentials.NewServerTLSFromFile(config.C.GRPC.CertFile, config.C.GRPC.KeyFile)
+		if err != nil {
+			slog.Error("加载 TLS 证书失败", "error", err)
+			panic(err)
+		}
+		grpcOpts = append(grpcOpts, grpc.Creds(creds))
+		slog.Warn("gRPC 服务器将使用 TLS 加密")
+
+	}
+
+	grpcOpts = append(grpcOpts,
 		grpc.UnaryInterceptor(service.TokenAuthInterceptor()),
 		grpc.StreamInterceptor(service.StreamTokenAuthInterceptor()),
 	)
+	grpcServer := grpc.NewServer(grpcOpts...)
 	myproto.RegisterClientManagerServer(grpcServer, service.NewClientManagerService(dispatcher))
 	myproto.RegisterCheckServiceServer(grpcServer, service.NewCheckServiceService(dispatcher))
 
 	go func() {
-		lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.C.GRPCPort))
+		lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.C.GRPC.Port))
 		if err != nil {
 			slog.Error("gRPC 监听失败", "error", err)
 			panic(err)
 		}
-		slog.Warn("gRPC 服务器启动", "port", config.C.GRPCPort)
+		slog.Warn("gRPC 服务器启动", "port", config.C.GRPC.Port)
 		if err := grpcServer.Serve(lis); err != nil {
 			slog.Error("gRPC 服务失败", "error", err)
 		}

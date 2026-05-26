@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"io"
@@ -39,7 +38,7 @@ func main() {
 	if *insecureFlag {
 		creds = insecure.NewCredentials()
 	} else {
-		creds = credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12})
+		creds = credentials.NewClientTLSFromCert(nil, "")
 	}
 
 	conn, err := grpc.NewClient(*serverAddr,
