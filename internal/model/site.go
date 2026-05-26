@@ -16,5 +16,6 @@ type Site struct {
 	URL         string        `json:"url" bson:"url"`
 	Status      int           `json:"status" bson:"status"`
 	Type        string        `json:"type" bson:"type"`
+	Logo        string        `json:"logo" bson:"logo"`
 	CreatedAt   int64         `json:"created_at" bson:"created_at"`
 }

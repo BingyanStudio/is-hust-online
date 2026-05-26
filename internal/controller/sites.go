@@ -16,6 +16,7 @@ type CreateSiteRequest struct {
 	URL         string `json:"url" validate:"required"`
 	Type        string `json:"type"`
 	Description string `json:"description"`
+	Logo        string `json:"logo"`
 }
 
 type UpdateSiteRequest struct {
@@ -24,6 +25,7 @@ type UpdateSiteRequest struct {
 	Type        *string `json:"type"`
 	Description *string `json:"description"`
 	Status      *int    `json:"status"`
+	Logo        *string `json:"logo"`
 }
 
 func ListSites(c *echo.Context) error {
@@ -70,6 +72,7 @@ func CreateSite(c *echo.Context) error {
 		Description: req.Description,
 		Status:      model.SITE_STATUS_ENABLED,
 		CreatedAt:   time.Now().Unix(),
+		Logo:        req.Logo,
 	}
 
 	if err := dao.InsertSite(c.Request().Context(), site); err != nil {
@@ -105,6 +108,9 @@ func UpdateSite(c *echo.Context) error {
 	}
 	if req.Status != nil {
 		update["status"] = *req.Status
+	}
+	if req.Logo != nil {
+		update["logo"] = *req.Logo
 	}
 
 	if len(update) == 0 {
