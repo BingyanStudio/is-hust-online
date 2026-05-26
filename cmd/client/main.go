@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"flag"
 	"io"
 	"log/slog"
@@ -133,7 +134,7 @@ func main() {
 					slog.Warn("stream ended", "error", err)
 					break
 				}
-				go performCheck(csClient, clientID, task)
+				go performCheck(csClient, clientID, *token, task)
 			}
 		}
 	}()
@@ -176,7 +177,7 @@ func retrieveIPv4Address() (string, error) {
 	return ip, nil
 }
 
-func performCheck(csClient myproto.CheckServiceClient, clientID string, task *myproto.CheckTask) {
+func performCheck(csClient myproto.CheckServiceClient, clientID string, token string, task *myproto.CheckTask) {
 	start := time.Now()
 	check := task.Check
 	if check == nil {
@@ -210,6 +211,7 @@ func performCheck(csClient myproto.CheckServiceClient, clientID string, task *my
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", "Bearer "+token))
 
 	_, err := csClient.ReportResult(ctx, &myproto.CheckResultRequest{
 		ClientId: clientID,
@@ -242,6 +244,8 @@ func doHTTPCheck(check *myproto.CheckRequest) *myproto.CheckResponse {
 		}
 	}
 
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0")
+
 	resp, err := client.Do(req)
 	if err != nil {
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
@@ -260,10 +264,17 @@ func doHTTPCheck(check *myproto.CheckRequest) *myproto.CheckResponse {
 	defer resp.Body.Close()
 
 	success := resp.StatusCode >= 200 && resp.StatusCode < 300
+
+	extra, err := json.Marshal(map[string]string{"status_code": http.StatusText(resp.StatusCode)})
+	if err != nil {
+		extra = []byte("{}")
+	}
+
 	return &myproto.CheckResponse{
 		Id:        check.Id,
 		Success:   success,
 		ErrorType: myproto.ErrorType_ERROR_TYPE_NO_ERROR,
+		Extra:     extra,
 	}
 }
 

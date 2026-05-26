@@ -15,4 +15,5 @@ type Check struct {
 	Status        myproto.ErrorType `json:"status" bson:"status"`
 	Result        string            `json:"result" bson:"result"`
 	Delay         int64             `json:"delay" bson:"delay"`
+	Extra         any               `json:"extra" bson:"extra"`
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"math"
@@ -75,6 +76,10 @@ func (s *CheckServiceService) ReportResult(ctx context.Context, req *myproto.Che
 
 	checkConfigID, _ := bson.ObjectIDFromHex(result.CheckConfigId)
 
+	var extra any
+
+	_ = json.Unmarshal(result.Extra, &extra)
+
 	check := &model.Check{
 		SiteID:        siteID,
 		ClientID:      clientID,
@@ -83,6 +88,7 @@ func (s *CheckServiceService) ReportResult(ctx context.Context, req *myproto.Che
 		Status:        result.ErrorType,
 		Result:        buildResultString(result),
 		Delay:         int64(responseTimeMs),
+		Extra:         extra,
 	}
 
 	if err := dao.InsertCheck(ctx, check); err != nil {

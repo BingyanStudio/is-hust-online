@@ -61,6 +61,7 @@ func main() {
 	// 启动 gRPC 服务器
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(service.TokenAuthInterceptor()),
+		grpc.StreamInterceptor(service.StreamTokenAuthInterceptor()),
 	)
 	myproto.RegisterClientManagerServer(grpcServer, service.NewClientManagerService(dispatcher))
 	myproto.RegisterCheckServiceServer(grpcServer, service.NewCheckServiceService(dispatcher))

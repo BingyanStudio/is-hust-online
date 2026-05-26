@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"sync"
 	"time"
@@ -127,6 +128,15 @@ func (s *Scheduler) tick() {
 			s.lastRun[configIDHex] = now
 			s.mu.Unlock()
 
+			var extra []byte
+
+			extra, err = json.Marshal(config.CheckExtra)
+			if err != nil {
+				slog.Warn("scheduler: failed to parse check_extra, using empty array",
+					"config", config.ID.Hex(), "error", err)
+				extra = []byte{}
+			}
+
 			task := &myproto.CheckTask{
 				TaskId: bson.NewObjectID().Hex(),
 				Check: &myproto.CheckRequest{
@@ -135,6 +145,7 @@ func (s *Scheduler) tick() {
 					CheckType:     myproto.CheckType(config.CheckType),
 					Method:        "GET",
 					CheckConfigId: config.ID.Hex(),
+					Extra:         extra,
 				},
 				AssignedAt: now.Unix(),
 			}

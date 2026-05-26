@@ -3,14 +3,12 @@ package service
 import (
 	"context"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/BingyanStudio/is-hust-online/internal/dao"
 	myproto "github.com/BingyanStudio/is-hust-online/pkg/proto"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
@@ -112,18 +110,3 @@ func (s *ClientManagerService) Deregister(ctx context.Context, req *myproto.Dere
 	return &myproto.DeregisterResponse{Success: true}, nil
 }
 
-func extractToken(ctx context.Context) string {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return ""
-	}
-	authHeaders := md.Get("authorization")
-	if len(authHeaders) == 0 {
-		return ""
-	}
-	parts := strings.SplitN(authHeaders[0], " ", 2)
-	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
-		return parts[1]
-	}
-	return authHeaders[0]
-}

@@ -17,14 +17,14 @@ type CreateCheckConfigRequest struct {
 	ClientID      string `json:"client_id" validate:"required"`
 	CheckType     int32  `json:"check_type" validate:"required"`
 	CheckInterval string `json:"check_interval" validate:"required"`
-	CheckExtra    string `json:"check_extra"`
+	CheckExtra    any    `json:"check_extra"`
 }
 
 type UpdateCheckConfigRequest struct {
 	ClientID      *string `json:"client_id"`
 	CheckType     *int32  `json:"check_type"`
 	CheckInterval *string `json:"check_interval"`
-	CheckExtra    *string `json:"check_extra"`
+	CheckExtra    *any    `json:"check_extra"`
 	Status        *int32  `json:"status"`
 }
 
