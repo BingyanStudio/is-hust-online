@@ -24,6 +24,13 @@ func InitViews(e *echo.Echo) {
 	api.PUT("/clients/:id", controller.UpdateClient)
 	api.DELETE("/clients/:id", controller.DeleteClient)
 
+	// Check Configs
+	api.GET("/check-configs", controller.ListCheckConfigs)
+	api.GET("/check-configs/:id", controller.GetCheckConfig)
+	api.POST("/check-configs", controller.CreateCheckConfig)
+	api.PUT("/check-configs/:id", controller.UpdateCheckConfig)
+	api.DELETE("/check-configs/:id", controller.DeleteCheckConfig)
+
 	// Checks
 	api.GET("/checks", controller.ListChecks)
 
