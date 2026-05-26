@@ -14,11 +14,8 @@ enum ClientStatus {
 }
 
 message ClientInfo {
-  string name = 1;
-  string location = 2;
-  string ip = 3;
-  repeated CheckType capabilities = 4;
-  map<string, string> labels = 5;
+  string ip = 1;
+  repeated CheckType capabilities = 2;
 }
 
 message RegisterRequest {

@@ -78,11 +78,8 @@ func (ClientStatus) EnumDescriptor() ([]byte, []int) {
 
 type ClientInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Location      string                 `protobuf:"bytes,2,opt,name=location,proto3" json:"location,omitempty"`
-	Ip            string                 `protobuf:"bytes,3,opt,name=ip,proto3" json:"ip,omitempty"`
-	Capabilities  []CheckType            `protobuf:"varint,4,rep,packed,name=capabilities,proto3,enum=net.bingyan.hust_uptime.v1.CheckType" json:"capabilities,omitempty"`
-	Labels        map[string]string      `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Ip            string                 `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty"`
+	Capabilities  []CheckType            `protobuf:"varint,2,rep,packed,name=capabilities,proto3,enum=net.bingyan.hust_uptime.v1.CheckType" json:"capabilities,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -117,20 +114,6 @@ func (*ClientInfo) Descriptor() ([]byte, []int) {
 	return file_net_bingyan_hust_uptime_v1_client_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *ClientInfo) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *ClientInfo) GetLocation() string {
-	if x != nil {
-		return x.Location
-	}
-	return ""
-}
-
 func (x *ClientInfo) GetIp() string {
 	if x != nil {
 		return x.Ip
@@ -141,13 +124,6 @@ func (x *ClientInfo) GetIp() string {
 func (x *ClientInfo) GetCapabilities() []CheckType {
 	if x != nil {
 		return x.Capabilities
-	}
-	return nil
-}
-
-func (x *ClientInfo) GetLabels() map[string]string {
-	if x != nil {
-		return x.Labels
 	}
 	return nil
 }
@@ -452,17 +428,11 @@ var File_net_bingyan_hust_uptime_v1_client_proto protoreflect.FileDescriptor
 
 const file_net_bingyan_hust_uptime_v1_client_proto_rawDesc = "" +
 	"\n" +
-	"'net/bingyan/hust_uptime/v1/client.proto\x12\x1anet.bingyan.hust_uptime.v1\x1a&net/bingyan/hust_uptime/v1/check.proto\"\x9e\x02\n" +
+	"'net/bingyan/hust_uptime/v1/client.proto\x12\x1anet.bingyan.hust_uptime.v1\x1a&net/bingyan/hust_uptime/v1/check.proto\"g\n" +
 	"\n" +
-	"ClientInfo\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
-	"\blocation\x18\x02 \x01(\tR\blocation\x12\x0e\n" +
-	"\x02ip\x18\x03 \x01(\tR\x02ip\x12I\n" +
-	"\fcapabilities\x18\x04 \x03(\x0e2%.net.bingyan.hust_uptime.v1.CheckTypeR\fcapabilities\x12J\n" +
-	"\x06labels\x18\x05 \x03(\v22.net.bingyan.hust_uptime.v1.ClientInfo.LabelsEntryR\x06labels\x1a9\n" +
-	"\vLabelsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Z\n" +
+	"ClientInfo\x12\x0e\n" +
+	"\x02ip\x18\x01 \x01(\tR\x02ip\x12I\n" +
+	"\fcapabilities\x18\x02 \x03(\x0e2%.net.bingyan.hust_uptime.v1.CheckTypeR\fcapabilities\"Z\n" +
 	"\x0fRegisterRequest\x12G\n" +
 	"\vclient_info\x18\x01 \x01(\v2&.net.bingyan.hust_uptime.v1.ClientInfoR\n" +
 	"clientInfo\"c\n" +
@@ -501,7 +471,7 @@ func file_net_bingyan_hust_uptime_v1_client_proto_rawDescGZIP() []byte {
 }
 
 var file_net_bingyan_hust_uptime_v1_client_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_net_bingyan_hust_uptime_v1_client_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_net_bingyan_hust_uptime_v1_client_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_net_bingyan_hust_uptime_v1_client_proto_goTypes = []any{
 	(ClientStatus)(0),          // 0: net.bingyan.hust_uptime.v1.ClientStatus
 	(*ClientInfo)(nil),         // 1: net.bingyan.hust_uptime.v1.ClientInfo
@@ -511,19 +481,17 @@ var file_net_bingyan_hust_uptime_v1_client_proto_goTypes = []any{
 	(*HeartbeatResponse)(nil),  // 5: net.bingyan.hust_uptime.v1.HeartbeatResponse
 	(*DeregisterRequest)(nil),  // 6: net.bingyan.hust_uptime.v1.DeregisterRequest
 	(*DeregisterResponse)(nil), // 7: net.bingyan.hust_uptime.v1.DeregisterResponse
-	nil,                        // 8: net.bingyan.hust_uptime.v1.ClientInfo.LabelsEntry
-	(CheckType)(0),             // 9: net.bingyan.hust_uptime.v1.CheckType
+	(CheckType)(0),             // 8: net.bingyan.hust_uptime.v1.CheckType
 }
 var file_net_bingyan_hust_uptime_v1_client_proto_depIdxs = []int32{
-	9, // 0: net.bingyan.hust_uptime.v1.ClientInfo.capabilities:type_name -> net.bingyan.hust_uptime.v1.CheckType
-	8, // 1: net.bingyan.hust_uptime.v1.ClientInfo.labels:type_name -> net.bingyan.hust_uptime.v1.ClientInfo.LabelsEntry
-	1, // 2: net.bingyan.hust_uptime.v1.RegisterRequest.client_info:type_name -> net.bingyan.hust_uptime.v1.ClientInfo
-	0, // 3: net.bingyan.hust_uptime.v1.HeartbeatRequest.status:type_name -> net.bingyan.hust_uptime.v1.ClientStatus
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	8, // 0: net.bingyan.hust_uptime.v1.ClientInfo.capabilities:type_name -> net.bingyan.hust_uptime.v1.CheckType
+	1, // 1: net.bingyan.hust_uptime.v1.RegisterRequest.client_info:type_name -> net.bingyan.hust_uptime.v1.ClientInfo
+	0, // 2: net.bingyan.hust_uptime.v1.HeartbeatRequest.status:type_name -> net.bingyan.hust_uptime.v1.ClientStatus
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_net_bingyan_hust_uptime_v1_client_proto_init() }
@@ -538,7 +506,7 @@ func file_net_bingyan_hust_uptime_v1_client_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_net_bingyan_hust_uptime_v1_client_proto_rawDesc), len(file_net_bingyan_hust_uptime_v1_client_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

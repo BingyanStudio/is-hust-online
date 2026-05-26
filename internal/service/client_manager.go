@@ -53,10 +53,7 @@ func (s *ClientManagerService) Register(ctx context.Context, req *myproto.Regist
 		"status":       0, // CLIENT_STATUS_ONLINE
 		"ip":           req.ClientInfo.Ip,
 		"last_online":  time.Now().Unix(),
-		"location":     req.ClientInfo.Location,
 		"capabilities": cap,
-		"name":         req.ClientInfo.Name,
-		"labels":       req.ClientInfo.Labels,
 	})
 	if err != nil {
 		slog.Error("failed to update client on register", "error", err, "client_id", client.ID.Hex())

@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"context"
@@ -48,13 +48,6 @@ func main() {
 		panic(err)
 	}
 	slog.Warn("MongoDB 连接成功")
-
-	err = db.InitRedisClient(config.C.Redis)
-	if err != nil {
-		slog.Error("Redis 客户端初始化失败", "error", err)
-		panic(err)
-	}
-	slog.Warn("Redis 连接成功")
 
 	// Context for coordinating shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -137,9 +130,6 @@ func main() {
 		// Close database connections
 		if err := db.CloseMongoDB(); err != nil {
 			slog.Error("MongoDB close error", "error", err)
-		}
-		if err := db.CloseRedisClient(); err != nil {
-			slog.Error("Redis close error", "error", err)
 		}
 	}()
 

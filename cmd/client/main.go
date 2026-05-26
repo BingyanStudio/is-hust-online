@@ -1,4 +1,4 @@
-package client
+package main
 
 import (
 	"context"
@@ -26,9 +26,7 @@ func main() {
 	serverAddr := flag.String("server", "localhost:9090", "gRPC server address")
 	token := flag.String("token", "", "authentication token")
 	capabilities := flag.String("capabilities", "http,ping,tcp", "comma-separated list of check capabilities (http, ping, tcp)")
-	location := flag.String("location", "default", "client location for geolocation-based checks")
 	insecureFlag := flag.Bool("insecure", false, "use insecure gRPC connection (no TLS)")
-	name := flag.String("name", "default", "client name (optional, defaults to public IP)")
 	flag.Parse()
 
 	if *token == "" {
@@ -78,9 +76,7 @@ func main() {
 
 	regResp, err := cmClient.Register(ctx, &myproto.RegisterRequest{
 		ClientInfo: &myproto.ClientInfo{
-			Name:         *name,
 			Ip:           ip,
-			Location:     *location,
 			Capabilities: caps,
 		},
 	})
