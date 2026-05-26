@@ -1,0 +1,808 @@
+openapi: 3.1.0
+info:
+  title: is-hust-online API
+  description: 华科大在线吗? — 分布式站点监控系统 HTTP API
+  version: 1.0.0
+
+servers:
+  - url: /api
+
+security:
+  - basicAuth: []
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: 所有写操作（POST/PUT/DELETE）需要 Basic Auth；读操作无需认证，但未认证时 Client 的 token 和 ip 字段会被隐藏。
+
+  schemas:
+    # ── Enum ──────────────────────────────────────────────
+    SiteStatus:
+      type: integer
+      enum: [0, 1]
+      description: "0=enabled, 1=disabled"
+
+    ClientStatus:
+      type: integer
+      enum: [0, 1, 2]
+      description: "0=online, 1=offline, 2=disabled"
+
+    CheckConfigStatus:
+      type: integer
+      enum: [0, 1]
+      description: "0=enabled, 1=disabled"
+
+    CheckType:
+      type: integer
+      enum: [0, 1, 2, 4, 8]
+      description: "0=UNKNOWN, 1=HTTP, 2=PING, 4=TCP, 8=OTHER"
+
+    ErrorType:
+      type: integer
+      enum: [0, 1, 2, 3, 4, 5, 6, 7]
+      description: "0=NO_ERROR, 1=HTTP_UNREACHABLE, 2=HTTP_TIMEOUT, 3=HTTP_OTHER, 4=PING_TIMEOUT, 5=PING_UNREACHABLE, 6=TCP_TIMEOUT, 7=TCP_UNREACHABLE"
+
+    ReportType:
+      type: integer
+      enum: [0, 1, 2]
+      description: "0=hourly, 1=daily, 2=monthly"
+
+    # ── Domain Models ─────────────────────────────────────
+    Site:
+      type: object
+      properties:
+        id:
+          type: string
+          description: MongoDB ObjectID (24-char hex)
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        type:
+          type: string
+        description:
+          type: string
+        logo:
+          type: string
+          format: uri
+        status:
+          $ref: "#/components/schemas/SiteStatus"
+        created_at:
+          type: integer
+          format: int64
+          description: Unix timestamp (seconds)
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        location:
+          type: string
+        capabilities:
+          type: integer
+          format: int32
+          description: Bitmask of supported CheckType values
+        status:
+          $ref: "#/components/schemas/ClientStatus"
+        token:
+          type: string
+          description: 64-char hex token. Only returned for authenticated requests.
+        ip:
+          type: string
+          description: Last seen IP. Only returned for authenticated requests.
+        last_online:
+          type: integer
+          format: int64
+        created_at:
+          type: integer
+          format: int64
+        labels:
+          type: array
+          items:
+            type: string
+
+    CheckConfig:
+      type: object
+      properties:
+        id:
+          type: string
+        site_id:
+          type: string
+        client_id:
+          type: string
+        status:
+          $ref: "#/components/schemas/CheckConfigStatus"
+        check_type:
+          $ref: "#/components/schemas/CheckType"
+        check_interval:
+          type: string
+          description: Cron expression
+        check_extra:
+          description: Arbitrary extra config (varies by check type)
+
+    Check:
+      type: object
+      properties:
+        id:
+          type: string
+        site_id:
+          type: string
+        client_id:
+          type: string
+        check_config_id:
+          type: string
+        timestamp:
+          type: integer
+          format: int64
+        type:
+          $ref: "#/components/schemas/CheckType"
+        status:
+          $ref: "#/components/schemas/ErrorType"
+        result:
+          type: string
+        delay:
+          type: integer
+          format: int64
+          description: Response delay in milliseconds
+        extra:
+          description: Arbitrary extra result data
+
+    Report:
+      type: object
+      properties:
+        site_id:
+          type: string
+        check_config_id:
+          type: string
+        timeframe:
+          type: string
+          description: Time bucket identifier (e.g. "2026052614" for hourly)
+        type:
+          $ref: "#/components/schemas/ReportType"
+        checks:
+          type: integer
+          format: int64
+        successes:
+          type: integer
+          format: int64
+        uptime:
+          type: number
+          format: double
+          description: Uptime percentage (0–100)
+        avg_delay:
+          type: number
+          format: double
+
+    # ── Request Bodies ────────────────────────────────────
+    CreateSiteRequest:
+      type: object
+      required: [name, url]
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        type:
+          type: string
+        description:
+          type: string
+        logo:
+          type: string
+          format: uri
+
+    UpdateSiteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        type:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/SiteStatus"
+        logo:
+          type: string
+          format: uri
+
+    CreateClientRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        capabilities:
+          type: integer
+          format: int32
+        labels:
+          type: array
+          items:
+            type: string
+
+    UpdateClientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        capabilities:
+          type: integer
+          format: int32
+        labels:
+          type: array
+          items:
+            type: string
+        status:
+          $ref: "#/components/schemas/ClientStatus"
+
+    CreateCheckConfigRequest:
+      type: object
+      required: [site_id, client_id, check_type, check_interval]
+      properties:
+        site_id:
+          type: string
+        client_id:
+          type: string
+        check_type:
+          $ref: "#/components/schemas/CheckType"
+        check_interval:
+          type: string
+          description: Cron expression
+        check_extra:
+          description: Arbitrary extra config
+
+    UpdateCheckConfigRequest:
+      type: object
+      properties:
+        client_id:
+          type: string
+        check_type:
+          $ref: "#/components/schemas/CheckType"
+        check_interval:
+          type: string
+        check_extra:
+          description: Arbitrary extra config
+        status:
+          $ref: "#/components/schemas/CheckConfigStatus"
+
+    # ── Response Wrappers ─────────────────────────────────
+    PagingMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int64
+        page_size:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
+        has_more:
+          type: boolean
+
+    Response:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 0 on success, HTTP status code on error
+        message:
+          type: string
+        data:
+          description: Payload — type varies per endpoint
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeParam:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 20
+        default: 10
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: MongoDB ObjectID (24-char hex)
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Response"
+    Unauthorized:
+      description: 认证失败
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: 'Basic realm="api"'
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Response"
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Response"
+
+paths:
+  # ═══════════════════════════════════════════════════════
+  #  Sites
+  # ═══════════════════════════════════════════════════════
+  /sites:
+    get:
+      summary: 列出所有站点
+      tags: [Sites]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Site"
+                          paging:
+                            $ref: "#/components/schemas/PagingMeta"
+    post:
+      summary: 创建站点
+      tags: [Sites]
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSiteRequest"
+      responses:
+        "200":
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Site"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /sites/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdParam"
+    get:
+      summary: 获取单个站点
+      tags: [Sites]
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Site"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: 更新站点
+      tags: [Sites]
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSiteRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Site"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: 删除站点
+      tags: [Sites]
+      security:
+        - basicAuth: []
+      responses:
+        "200":
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ═══════════════════════════════════════════════════════
+  #  Clients
+  # ═══════════════════════════════════════════════════════
+  /clients:
+    get:
+      summary: 列出所有客户端
+      tags: [Clients]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Client"
+                          paging:
+                            $ref: "#/components/schemas/PagingMeta"
+    post:
+      summary: 创建客户端
+      tags: [Clients]
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientRequest"
+      responses:
+        "200":
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Client"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /clients/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdParam"
+    get:
+      summary: 获取单个客户端
+      tags: [Clients]
+      description: 未认证时 token 和 ip 字段会被隐藏
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Client"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: 更新客户端
+      tags: [Clients]
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClientRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Client"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: 删除客户端
+      tags: [Clients]
+      security:
+        - basicAuth: []
+      responses:
+        "200":
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ═══════════════════════════════════════════════════════
+  #  Check Configs
+  # ═══════════════════════════════════════════════════════
+  /check-configs:
+    get:
+      summary: 列出检查配置
+      tags: [Check Configs]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: site_id
+          in: query
+          schema:
+            type: string
+        - name: client_id
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/CheckConfig"
+                          paging:
+                            $ref: "#/components/schemas/PagingMeta"
+    post:
+      summary: 创建检查配置
+      tags: [Check Configs]
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCheckConfigRequest"
+      responses:
+        "200":
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CheckConfig"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /check-configs/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdParam"
+    get:
+      summary: 获取单个检查配置
+      tags: [Check Configs]
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CheckConfig"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: 更新检查配置
+      tags: [Check Configs]
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCheckConfigRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CheckConfig"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: 删除检查配置
+      tags: [Check Configs]
+      security:
+        - basicAuth: []
+      responses:
+        "200":
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ═══════════════════════════════════════════════════════
+  #  Checks (read-only)
+  # ═══════════════════════════════════════════════════════
+  /checks:
+    get:
+      summary: 列出检查记录
+      tags: [Checks]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: site_id
+          in: query
+          schema:
+            type: string
+        - name: client_id
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Check"
+                          paging:
+                            $ref: "#/components/schemas/PagingMeta"
+
+  # ═══════════════════════════════════════════════════════
+  #  Reports (read-only)
+  # ═══════════════════════════════════════════════════════
+  /reports:
+    get:
+      summary: 列出报告
+      tags: [Reports]
+      parameters:
+        - name: site_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ReportType"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Response"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Report"
+        "400":
+          $ref: "#/components/responses/BadRequest"
