@@ -31,6 +31,7 @@ message CheckRequest {
   CheckType check_type = 4;
   optional int32 timeout_seconds = 5;
   optional bytes extra = 6;
+  string check_config_id = 7;
 }
 
 message CheckResponse {
@@ -41,6 +42,7 @@ message CheckResponse {
   optional int32 response_time_ms = 5;
   optional bytes extra = 6;
   CheckType check_type = 7;
+  string check_config_id = 8;
 }
 
 message ServiceStatus {

@@ -149,6 +149,7 @@ type CheckRequest struct {
 	CheckType      CheckType              `protobuf:"varint,4,opt,name=check_type,json=checkType,proto3,enum=net.bingyan.hust_uptime.v1.CheckType" json:"check_type,omitempty"`
 	TimeoutSeconds *int32                 `protobuf:"varint,5,opt,name=timeout_seconds,json=timeoutSeconds,proto3,oneof" json:"timeout_seconds,omitempty"`
 	Extra          []byte                 `protobuf:"bytes,6,opt,name=extra,proto3,oneof" json:"extra,omitempty"`
+	CheckConfigId  string                 `protobuf:"bytes,7,opt,name=check_config_id,json=checkConfigId,proto3" json:"check_config_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -225,6 +226,13 @@ func (x *CheckRequest) GetExtra() []byte {
 	return nil
 }
 
+func (x *CheckRequest) GetCheckConfigId() string {
+	if x != nil {
+		return x.CheckConfigId
+	}
+	return ""
+}
+
 type CheckResponse struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -234,6 +242,7 @@ type CheckResponse struct {
 	ResponseTimeMs *int32                 `protobuf:"varint,5,opt,name=response_time_ms,json=responseTimeMs,proto3,oneof" json:"response_time_ms,omitempty"`
 	Extra          []byte                 `protobuf:"bytes,6,opt,name=extra,proto3,oneof" json:"extra,omitempty"`
 	CheckType      CheckType              `protobuf:"varint,7,opt,name=check_type,json=checkType,proto3,enum=net.bingyan.hust_uptime.v1.CheckType" json:"check_type,omitempty"`
+	CheckConfigId  string                 `protobuf:"bytes,8,opt,name=check_config_id,json=checkConfigId,proto3" json:"check_config_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -317,6 +326,13 @@ func (x *CheckResponse) GetCheckType() CheckType {
 	return CheckType_CHECK_TYPE_UNKNOWN
 }
 
+func (x *CheckResponse) GetCheckConfigId() string {
+	if x != nil {
+		return x.CheckConfigId
+	}
+	return ""
+}
+
 type ServiceStatus struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	IsHealthy     bool                   `protobuf:"varint,1,opt,name=is_healthy,json=isHealthy,proto3" json:"is_healthy,omitempty"`
@@ -381,7 +397,7 @@ var File_net_bingyan_hust_uptime_v1_check_proto protoreflect.FileDescriptor
 
 const file_net_bingyan_hust_uptime_v1_check_proto_rawDesc = "" +
 	"\n" +
-	"&net/bingyan/hust_uptime/v1/check.proto\x12\x1anet.bingyan.hust_uptime.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf5\x01\n" +
+	"&net/bingyan/hust_uptime/v1/check.proto\x12\x1anet.bingyan.hust_uptime.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9d\x02\n" +
 	"\fCheckRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x16\n" +
@@ -389,9 +405,10 @@ const file_net_bingyan_hust_uptime_v1_check_proto_rawDesc = "" +
 	"\n" +
 	"check_type\x18\x04 \x01(\x0e2%.net.bingyan.hust_uptime.v1.CheckTypeR\tcheckType\x12,\n" +
 	"\x0ftimeout_seconds\x18\x05 \x01(\x05H\x00R\x0etimeoutSeconds\x88\x01\x01\x12\x19\n" +
-	"\x05extra\x18\x06 \x01(\fH\x01R\x05extra\x88\x01\x01B\x12\n" +
+	"\x05extra\x18\x06 \x01(\fH\x01R\x05extra\x88\x01\x01\x12&\n" +
+	"\x0fcheck_config_id\x18\a \x01(\tR\rcheckConfigIdB\x12\n" +
 	"\x10_timeout_secondsB\b\n" +
-	"\x06_extra\"\xe8\x02\n" +
+	"\x06_extra\"\x90\x03\n" +
 	"\rCheckResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12D\n" +
@@ -401,7 +418,8 @@ const file_net_bingyan_hust_uptime_v1_check_proto_rawDesc = "" +
 	"\x10response_time_ms\x18\x05 \x01(\x05H\x00R\x0eresponseTimeMs\x88\x01\x01\x12\x19\n" +
 	"\x05extra\x18\x06 \x01(\fH\x01R\x05extra\x88\x01\x01\x12D\n" +
 	"\n" +
-	"check_type\x18\a \x01(\x0e2%.net.bingyan.hust_uptime.v1.CheckTypeR\tcheckTypeB\x13\n" +
+	"check_type\x18\a \x01(\x0e2%.net.bingyan.hust_uptime.v1.CheckTypeR\tcheckType\x12&\n" +
+	"\x0fcheck_config_id\x18\b \x01(\tR\rcheckConfigIdB\x13\n" +
 	"\x11_response_time_msB\b\n" +
 	"\x06_extra\"s\n" +
 	"\rServiceStatus\x12\x1d\n" +
