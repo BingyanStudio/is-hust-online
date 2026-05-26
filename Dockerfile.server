@@ -22,4 +22,4 @@ RUN mkdir /env \
 	&& apk del tzdata
 COPY --from=builder /usr/src/app /app
 WORKDIR /env
-ENTRYPOINT [["/app"]]
+ENTRYPOINT ["/app"]
