@@ -64,7 +64,35 @@ func parseSchedule(expr string) (cron.Schedule, error) {
 	return parser.Parse(expr)
 }
 
+func (s *Scheduler) checkHeartbeats() {
+	const heartbeatTimeout = 60 * time.Second
+	staleBefore := time.Now().Add(-heartbeatTimeout).Unix()
+
+	staleClients, err := dao.FindStaleClients(s.ctx, staleBefore)
+	if err != nil {
+		slog.Error("scheduler: failed to find stale clients", "error", err)
+		return
+	}
+
+	if len(staleClients) == 0 {
+		return
+	}
+
+	ids := make([]bson.ObjectID, 0, len(staleClients))
+	for _, c := range staleClients {
+		ids = append(ids, c.ID)
+		s.dispatcher.UnregisterClient(c.ID.Hex())
+		slog.Warn("client marked offline (heartbeat timeout)", "client_id", c.ID.Hex(), "name", c.Name, "last_online", c.LastOnline)
+	}
+
+	if err := dao.BatchUpdateClientStatus(s.ctx, ids, model.CLIENT_STATUS_OFFLINE); err != nil {
+		slog.Error("scheduler: failed to batch update client status", "error", err)
+	}
+}
+
 func (s *Scheduler) tick() {
+	s.checkHeartbeats()
+
 	sites, err := dao.FindAllEnabledSites(s.ctx)
 	if err != nil {
 		slog.Error("scheduler: failed to find sites", "error", err)

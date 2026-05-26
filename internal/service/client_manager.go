@@ -47,9 +47,15 @@ func (s *ClientManagerService) Register(ctx context.Context, req *myproto.Regist
 		cap |= int(c)
 	}
 
+	ip := req.ClientInfo.Ip
+
+	if ip == "unknown" {
+		ip = peerIP
+	}
+
 	err = dao.UpdateClient(ctx, client.ID, bson.M{
 		"status":       0, // CLIENT_STATUS_ONLINE
-		"ip":           req.ClientInfo.Ip,
+		"ip":           ip,
 		"last_online":  time.Now().Unix(),
 		"capabilities": cap,
 	})
@@ -109,4 +115,3 @@ func (s *ClientManagerService) Deregister(ctx context.Context, req *myproto.Dere
 
 	return &myproto.DeregisterResponse{Success: true}, nil
 }
-

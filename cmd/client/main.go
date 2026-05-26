@@ -56,7 +56,7 @@ func main() {
 	// Register with token in metadata
 	ip, err := retrieveIPv4Address()
 	if err != nil {
-		slog.Warn("failed to retrieve public IP, using local hostname", "error", err)
+		slog.Warn("failed to retrieve public IP, using unknown", "error", err)
 		ip = "unknown"
 	}
 	md := metadata.Pairs("authorization", "Bearer "+*token)
