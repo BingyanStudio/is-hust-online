@@ -278,7 +278,7 @@ func doHTTPCheck(check *myproto.CheckRequest) *myproto.CheckResponse {
 	}
 	defer resp.Body.Close()
 
-	success := resp.StatusCode >= 200 && resp.StatusCode < 300
+	success := resp.StatusCode >= 200 && resp.StatusCode < 400
 
 	extra, err := json.Marshal(map[string]string{"status_code": http.StatusText(resp.StatusCode)})
 	if err != nil {
