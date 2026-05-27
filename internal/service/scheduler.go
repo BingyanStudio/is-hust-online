@@ -68,21 +68,17 @@ func (s *Scheduler) checkHeartbeats() {
 	const heartbeatTimeout = 60 * time.Second
 	staleBefore := time.Now().Add(-heartbeatTimeout).Unix()
 
-	staleClients, err := dao.FindStaleClients(s.ctx, staleBefore)
-	if err != nil {
-		slog.Error("scheduler: failed to find stale clients", "error", err)
+	staleIDs := s.dispatcher.GetStaleClientIDs(staleBefore)
+	if len(staleIDs) == 0 {
 		return
 	}
 
-	if len(staleClients) == 0 {
-		return
-	}
-
-	ids := make([]bson.ObjectID, 0, len(staleClients))
-	for _, c := range staleClients {
-		ids = append(ids, c.ID)
-		s.dispatcher.UnregisterClient(c.ID.Hex())
-		slog.Warn("client marked offline (heartbeat timeout)", "client_id", c.ID.Hex(), "name", c.Name, "last_online", c.LastOnline)
+	ids := make([]bson.ObjectID, 0, len(staleIDs))
+	for _, idHex := range staleIDs {
+		s.dispatcher.UnregisterClient(idHex)
+		id, _ := bson.ObjectIDFromHex(idHex)
+		ids = append(ids, id)
+		slog.Warn("client marked offline (heartbeat timeout)", "client_id", idHex)
 	}
 
 	if err := dao.BatchUpdateClientStatus(s.ctx, ids, model.CLIENT_STATUS_OFFLINE); err != nil {

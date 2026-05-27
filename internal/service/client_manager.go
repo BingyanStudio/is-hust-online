@@ -91,6 +91,8 @@ func (s *ClientManagerService) Heartbeat(ctx context.Context, req *myproto.Heart
 		return nil, status.Error(codes.Internal, "failed to update heartbeat")
 	}
 
+	s.dispatcher.UpdateHeartbeat(req.ClientId)
+
 	return &myproto.HeartbeatResponse{
 		Success:    true,
 		ServerTime: time.Now().Unix(),

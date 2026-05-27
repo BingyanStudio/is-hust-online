@@ -72,37 +72,6 @@ func DeleteClient(ctx context.Context, id bson.ObjectID) error {
 	return err
 }
 
-func FindOnlineClients(ctx context.Context) ([]model.Client, error) {
-	cursor, err := db.MongoDB.Collection(clientCollection).Find(ctx, bson.M{"status": model.CLIENT_STATUS_ONLINE})
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var clients []model.Client
-	if err := cursor.All(ctx, &clients); err != nil {
-		return nil, err
-	}
-	return clients, nil
-}
-
-func FindStaleClients(ctx context.Context, staleBefore int64) ([]model.Client, error) {
-	cursor, err := db.MongoDB.Collection(clientCollection).Find(ctx, bson.M{
-		"status":      model.CLIENT_STATUS_ONLINE,
-		"last_online": bson.M{"$lt": staleBefore},
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var clients []model.Client
-	if err := cursor.All(ctx, &clients); err != nil {
-		return nil, err
-	}
-	return clients, nil
-}
-
 func BatchUpdateClientStatus(ctx context.Context, ids []bson.ObjectID, status int) error {
 	if len(ids) == 0 {
 		return nil

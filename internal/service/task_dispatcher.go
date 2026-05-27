@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/BingyanStudio/is-hust-online/internal/dao"
 	"github.com/BingyanStudio/is-hust-online/internal/model"
@@ -13,8 +14,9 @@ import (
 const taskChannelBuffer = 16
 
 type clientEntry struct {
-	ch           chan *myproto.CheckTask
-	capabilities int32
+	ch            chan *myproto.CheckTask
+	capabilities  int32
+	lastHeartbeat int64 // unix timestamp of last successful heartbeat
 }
 
 type TaskDispatcher struct {
@@ -33,8 +35,9 @@ func (d *TaskDispatcher) RegisterClient(clientID string, capabilities int32) {
 	defer d.mu.Unlock()
 	if _, exists := d.clients[clientID]; !exists {
 		d.clients[clientID] = &clientEntry{
-			ch:           make(chan *myproto.CheckTask, taskChannelBuffer),
-			capabilities: capabilities,
+			ch:            make(chan *myproto.CheckTask, taskChannelBuffer),
+			capabilities:  capabilities,
+			lastHeartbeat: time.Now().Unix(),
 		}
 	}
 }
@@ -103,4 +106,24 @@ func (d *TaskDispatcher) GetOnlineClientIDsWithCapabilities() []OnlineClient {
 		})
 	}
 	return clients
+}
+
+func (d *TaskDispatcher) UpdateHeartbeat(clientID string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if entry, exists := d.clients[clientID]; exists {
+		entry.lastHeartbeat = time.Now().Unix()
+	}
+}
+
+func (d *TaskDispatcher) GetStaleClientIDs(staleBefore int64) []string {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	var staleIDs []string
+	for id, entry := range d.clients {
+		if entry.lastHeartbeat < staleBefore {
+			staleIDs = append(staleIDs, id)
+		}
+	}
+	return staleIDs
 }
