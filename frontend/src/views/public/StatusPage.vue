@@ -204,20 +204,20 @@ const slaColor = (uptime: number) => {
     <p style="color: #666; margin-bottom: 32px;">实时检测华科各类网络服务状态</p>
 
     <!-- Global stats -->
-    <div v-if="sites.length > 0" style="display: flex; gap: 24px; margin-bottom: 24px; padding: 16px 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e5e7eb;">
-      <div style="text-align: center; flex: 1;">
+    <div v-if="sites.length > 0" style="display: flex; flex-wrap: wrap; gap: 16px 24px; margin-bottom: 24px; padding: 16px 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e5e7eb;">
+      <div style="text-align: center; flex: 1; min-width: 60px;">
         <div style="font-size: 24px; font-weight: 700;">{{ overallStats.total }}</div>
         <div style="font-size: 12px; color: #888;">总数</div>
       </div>
-      <div style="text-align: center; flex: 1;">
+      <div style="text-align: center; flex: 1; min-width: 60px;">
         <div style="font-size: 24px; font-weight: 700; color: #22c55e;">{{ overallStats.onlineCount }}</div>
         <div style="font-size: 12px; color: #888;">在线</div>
       </div>
-      <div style="text-align: center; flex: 1;">
+      <div style="text-align: center; flex: 1; min-width: 60px;">
         <div style="font-size: 24px; font-weight: 700; color: #ef4444;">{{ overallStats.offlineCount }}</div>
         <div style="font-size: 12px; color: #888;">离线</div>
       </div>
-      <div style="text-align: center; flex: 1;">
+      <div style="text-align: center; flex: 1; min-width: 60px;">
         <div style="font-size: 24px; font-weight: 700;" :style="{ color: slaColor(overallStats.overallSLA) }">
           {{ overallStats.overallSLA.toFixed(1) }}%
         </div>
@@ -260,7 +260,7 @@ const slaColor = (uptime: number) => {
           <div
             v-for="site in groupSites"
             :key="site.id"
-            style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 8px;"
+                        style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 8px; overflow: hidden; min-width: 0;"
           >
             <!-- Site header: clickable -->
             <div
@@ -268,9 +268,9 @@ const slaColor = (uptime: number) => {
               style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; cursor: pointer;"
             >
               <SiteStatusBadge :status="site.status" />
-              <div style="flex: 1;">
-                <div style="font-weight: 500;">{{ site.name }}</div>
-                <div style="font-size: 12px; color: #888;">{{ site.url }}</div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 500; overflow-wrap: break-word;">{{ site.name }}</div>
+                <div style="font-size: 12px; color: #888; overflow-wrap: break-word; word-break: break-all;">{{ site.url }}</div>
               </div>
             </div>
 
@@ -282,7 +282,7 @@ const slaColor = (uptime: number) => {
                 style="padding: 8px 0; border-top: 1px solid #f3f4f6;"
               >
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                  <span style="font-size: 13px; font-weight: 500; color: #4b5563;">
+                  <span style="font-size: 13px; font-weight: 500; color: #4b5563; flex: 1; min-width: 0; overflow-wrap: break-word;">
                     {{ clientSiteInfos[clientKey]?.clientName || '...' }}
                   </span>
                   <div v-if="clientSiteInfos[clientKey]" style="text-align: right;">
