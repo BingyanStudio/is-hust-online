@@ -65,8 +65,8 @@ const handleCancel = () => {
   </el-dialog>
 
   <div style="display: flex; min-height: 100vh; font-family: system-ui, sans-serif;">
-    <aside style="width: 220px; background: #f8fafc; border-right: 1px solid #e5e7eb; padding: 20px 12px;">
-      <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding: 0 8px;">
+    <aside style="width: 220px; background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 20px 12px;">
+      <div style="font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding: 0 8px;">
         Admin
       </div>
       <nav>
@@ -77,7 +77,7 @@ const handleCancel = () => {
           style="padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-bottom: 2px; transition: background 0.15s;"
           :style="{
             background: route.path === item.path ? '#eff6ff' : 'transparent',
-            color: route.path === item.path ? '#2563eb' : '#374151',
+            color: route.path === item.path ? '#2563eb' : 'var(--text-secondary)',
             fontWeight: route.path === item.path ? 500 : 400,
           }"
         >

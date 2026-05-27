@@ -13,6 +13,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers'
 import type { Report } from '@/types'
 import { listReports } from '@/api/reports'
+import { useDarkMode } from '@/composables/useDarkMode'
 
 use([LineChart, TitleComponent, TooltipComponent, GridComponent, DataZoomComponent, LegendComponent, CanvasRenderer])
 
@@ -46,6 +47,8 @@ const allTimeframes = ref<string[]>([])
 const internalGranularity = ref<number>(0)
 const isControlled = computed(() => props.granularity !== undefined)
 const effectiveGranularity = computed(() => isControlled.value ? props.granularity! : internalGranularity.value)
+
+const { isDark } = useDarkMode()
 
 const mergeReports = async (configIds: string[]): Promise<MergedPoint[]> => {
   const results = await Promise.all(
@@ -132,13 +135,17 @@ const loadData = async () => {
 onMounted(loadData)
 watch([() => props.groups, () => props.checkConfigIds, () => props.granularity], loadData)
 
-const option = computed(() => ({
+const option = computed(() => {
+  const textColor = isDark.value ? '#b0b0b0' : '#333'
+  const gridColor = isDark.value ? '#333' : '#e5e7eb'
+  return {
   tooltip: {
     trigger: 'axis' as const,
   },
   legend: {
     data: seriesData.value.map((s) => s.name),
     bottom: 0,
+    textStyle: { color: textColor },
   },
   grid: {
     left: '3%',
@@ -151,11 +158,15 @@ const option = computed(() => ({
       type: 'slider' as const,
       start: 0,
       end: 100,
+      textStyle: { color: textColor },
     },
   ],
   xAxis: {
     type: 'category' as const,
     data: allTimeframes.value,
+    axisLine: { lineStyle: { color: gridColor } },
+    axisLabel: { color: textColor },
+    splitLine: { show: false },
   },
   yAxis: {
     type: 'value' as const,
@@ -163,7 +174,9 @@ const option = computed(() => ({
     max: 100,
     axisLabel: {
       formatter: '{value}%',
+      color: textColor,
     },
+    splitLine: { lineStyle: { color: gridColor } },
   },
   series: seriesData.value.map((s) => ({
     name: s.name,
@@ -180,7 +193,7 @@ const option = computed(() => ({
       color: s.color,
     },
   })),
-}))
+}})
 </script>
 
 <template>

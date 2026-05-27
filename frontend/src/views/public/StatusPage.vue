@@ -201,27 +201,27 @@ const slaColor = (uptime: number) => {
 <template>
   <div style="max-width: 800px; margin: 40px auto; padding: 0 20px; font-family: system-ui, sans-serif;">
     <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">华中大在线吗？</h1>
-    <p style="color: #666; margin-bottom: 32px;">实时检测华科各类网络服务状态</p>
+    <p style="color: var(--text-muted); margin-bottom: 32px;">实时检测华科各类网络服务状态</p>
 
     <!-- Global stats -->
-    <div v-if="sites.length > 0" style="display: flex; gap: 24px; margin-bottom: 24px; padding: 16px 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e5e7eb;">
+    <div v-if="sites.length > 0" style="display: flex; gap: 24px; margin-bottom: 24px; padding: 16px 20px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border);">
       <div style="text-align: center; flex: 1;">
         <div style="font-size: 24px; font-weight: 700;">{{ overallStats.total }}</div>
-        <div style="font-size: 12px; color: #888;">总数</div>
+        <div style="font-size: 12px; color: var(--text-dim);">总数</div>
       </div>
       <div style="text-align: center; flex: 1;">
         <div style="font-size: 24px; font-weight: 700; color: #22c55e;">{{ overallStats.onlineCount }}</div>
-        <div style="font-size: 12px; color: #888;">在线</div>
+        <div style="font-size: 12px; color: var(--text-dim);">在线</div>
       </div>
       <div style="text-align: center; flex: 1;">
         <div style="font-size: 24px; font-weight: 700; color: #ef4444;">{{ overallStats.offlineCount }}</div>
-        <div style="font-size: 12px; color: #888;">离线</div>
+        <div style="font-size: 12px; color: var(--text-dim);">离线</div>
       </div>
       <div style="text-align: center; flex: 1;">
         <div style="font-size: 24px; font-weight: 700;" :style="{ color: slaColor(overallStats.overallSLA) }">
           {{ overallStats.overallSLA.toFixed(1) }}%
         </div>
-        <div style="font-size: 12px; color: #888;">SLA</div>
+        <div style="font-size: 12px; color: var(--text-dim);">SLA</div>
       </div>
     </div>
 
@@ -253,14 +253,14 @@ const slaColor = (uptime: number) => {
 
       <template v-if="Object.keys(groupedSites).length > 0">
         <div v-for="(groupSites, type) in groupedSites" :key="type" :id="'type-' + type" style="margin-bottom: 32px;">
-          <h2 style="font-size: 15px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
+          <h2 style="font-size: 15px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
             {{ type }}
           </h2>
 
           <div
             v-for="site in groupSites"
             :key="site.id"
-            style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 8px;"
+            style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 8px;"
           >
             <!-- Site header: clickable -->
             <div
@@ -270,7 +270,7 @@ const slaColor = (uptime: number) => {
               <SiteStatusBadge :status="site.status" />
               <div style="flex: 1;">
                 <div style="font-weight: 500;">{{ site.name }}</div>
-                <div style="font-size: 12px; color: #888;">{{ site.url }}</div>
+                <div style="font-size: 12px; color: var(--text-dim);">{{ site.url }}</div>
               </div>
             </div>
 
@@ -279,14 +279,14 @@ const slaColor = (uptime: number) => {
               <div
                 v-for="clientKey in getSiteClientKeys(site.id)"
                 :key="clientKey"
-                style="padding: 8px 0; border-top: 1px solid #f3f4f6;"
+                style="padding: 8px 0; border-top: 1px solid var(--border-light);"
               >
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                  <span style="font-size: 13px; font-weight: 500; color: #4b5563;">
+                  <span style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">
                     {{ clientSiteInfos[clientKey]?.clientName || '...' }}
                   </span>
                   <div v-if="clientSiteInfos[clientKey]" style="text-align: right;">
-                    <span style="font-size: 11px; color: #888;">SLA</span>
+                    <span style="font-size: 11px; color: var(--text-dim);">SLA</span>
                     <span style="font-size: 14px; font-weight: 600; margin-left: 4px;" :style="{ color: slaColor(clientSiteInfos[clientKey]!.monthlyUptime) }">
                       {{ clientSiteInfos[clientKey]!.monthlyUptime.toFixed(1) }}%
                     </span>
@@ -309,24 +309,24 @@ const slaColor = (uptime: number) => {
                   />
                   <div
                     v-if="clientSiteInfos[clientKey] && clientSiteInfos[clientKey]!.recentChecks.length === 0"
-                    style="flex: 1; height: 4px; background: #e5e7eb; border-radius: 2px;"
+                    style="flex: 1; height: 4px; background: var(--border); border-radius: 2px;"
                   />
                 </div>
               </div>
             </div>
 
             <!-- Fallback when no clients -->
-            <div v-else style="padding-top: 8px; border-top: 1px solid #f3f4f6;">
-              <p style="font-size: 12px; color: #999; margin-bottom: 8px;">还没有配置客户端</p>
+            <div v-else style="padding-top: 8px; border-top: 1px solid var(--border-light);">
+              <p style="font-size: 12px; color: var(--text-faint); margin-bottom: 8px;">还没有配置客户端</p>
             </div>
           </div>
         </div>
       </template>
 
-      <p v-if="!loading && sites.length === 0" style="color: #999; text-align: center; padding: 40px 0;">
+      <p v-if="!loading && sites.length === 0" style="color: var(--text-faint); text-align: center; padding: 40px 0;">
         还没有配置站点
       </p>
-      <p v-if="!loading && sites.length > 0 && Object.keys(groupedSites).length === 0" style="color: #999; text-align: center; padding: 40px 0;">
+      <p v-if="!loading && sites.length > 0 && Object.keys(groupedSites).length === 0" style="color: var(--text-faint); text-align: center; padding: 40px 0;">
         没有匹配您搜索的站点
       </p>
     </div>

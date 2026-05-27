@@ -129,10 +129,10 @@ const clientStatusColor = (status: number) => {
               :label="group.client.name"
               :name="group.client.id"
             >
-              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 16px; background: #f9fafb; border-radius: 6px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 16px; background: var(--bg-secondary); border-radius: 6px;">
                 <div>
                   <div style="font-weight: 500; font-size: 15px;">{{ group.client.name }}</div>
-                  <div style="font-size: 12px; color: #888;">{{ group.client.location || 'No location' }}</div>
+                  <div style="font-size: 12px; color: var(--text-dim);">{{ group.client.location || 'No location' }}</div>
                 </div>
                 <el-tag size="small" :color="clientStatusColor(group.client.status)" style="color: white; border: none;">
                   {{ clientStatusLabel(group.client.status) }}
@@ -151,7 +151,7 @@ const clientStatusColor = (status: number) => {
 
         <!-- Fallback: no clients configured -->
         <template v-else>
-          <p style="color: #999; font-size: 13px; margin-bottom: 20px;">No monitoring clients configured for this site.</p>
+          <p style="color: var(--text-faint); font-size: 13px; margin-bottom: 20px;">No monitoring clients configured for this site.</p>
           <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">Uptime</h2>
           <UptimeChart :site-id="id" />
 
