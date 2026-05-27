@@ -9,7 +9,11 @@ import (
 )
 
 func InitStatic(e *echo.Echo, fsys fs.FS) {
-	fileServer := http.FileServer(http.FS(fsys))
+	// Strip the embedding directory prefix (e.g. "dist/") so file lookups match URL paths
+	sub, err := fs.Sub(fsys, "dist")
+	if err != nil {
+		panic("embedded frontend: " + err.Error())
+	}
 
 	e.Any("/*", func(c *echo.Context) error {
 		path := strings.TrimPrefix(c.Path(), "/")
@@ -19,17 +23,17 @@ func InitStatic(e *echo.Echo, fsys fs.FS) {
 		}
 
 		// Try to serve the file directly
-		if f, err := fs.ReadFile(fsys, path); err == nil {
+		if f, err := fs.ReadFile(sub, path); err == nil {
 			ct := detectContentType(path, f)
 			return c.Blob(http.StatusOK, ct, f)
 		}
 
 		// Fallback to index.html for SPA routing
-		if f, err := fs.ReadFile(fsys, "index.html"); err == nil {
+		if f, err := fs.ReadFile(sub, "index.html"); err == nil {
 			return c.Blob(http.StatusOK, "text/html", f)
 		}
 
-		fileServer.ServeHTTP(c.Response(), c.Request())
+		http.NotFound(c.Response(), c.Request())
 		return nil
 	})
 }
