@@ -39,7 +39,16 @@ func ListReports(c *echo.Context) error {
 		reportType = &t
 	}
 
-	reports, err := dao.FindReportsBySiteID(c.Request().Context(), siteIDObj, reportType, pageParam.Page, pageParam.PageSize)
+	var checkConfigID *bson.ObjectID
+	if ccIDStr := c.QueryParam("check_config_id"); ccIDStr != "" {
+		ccID, err := bson.ObjectIDFromHex(ccIDStr)
+		if err != nil {
+			return param.Error(c, http.StatusBadRequest, "invalid check_config_id", err)
+		}
+		checkConfigID = &ccID
+	}
+
+	reports, err := dao.FindReportsBySiteID(c.Request().Context(), siteIDObj, checkConfigID, reportType, pageParam.Page, pageParam.PageSize)
 	if err != nil {
 		return param.Error(c, http.StatusInternalServerError, "failed to list reports", err)
 	}

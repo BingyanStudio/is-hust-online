@@ -16,6 +16,11 @@ import { listReports } from '@/api/reports'
 
 use([LineChart, TitleComponent, TooltipComponent, GridComponent, DataZoomComponent, LegendComponent, CanvasRenderer])
 
+const PALETTE = [
+  '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de',
+  '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc', '#48b8d0',
+]
+
 const props = withDefaults(defineProps<{
   siteId: string
   groups?: { name: string; checkConfigIds: string[] }[]
@@ -27,27 +32,18 @@ const props = withDefaults(defineProps<{
   showControls: true,
 })
 
-// Palette for multiple clients
-const PALETTE = [
-  '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de',
-  '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc', '#48b8d0',
-]
-
-interface MergedPoint {
+interface DelayPoint {
   timeframe: string
-  checks: number
-  successes: number
-  uptime: number
   avg_delay: number
 }
 
-const seriesData = ref<{ name: string; color: string; data: MergedPoint[] }[]>([])
+const seriesData = ref<{ name: string; color: string; data: DelayPoint[] }[]>([])
 const allTimeframes = ref<string[]>([])
 const internalGranularity = ref<number>(0)
 const isControlled = computed(() => props.granularity !== undefined)
 const effectiveGranularity = computed(() => isControlled.value ? props.granularity! : internalGranularity.value)
 
-const mergeReports = async (configIds: string[]): Promise<MergedPoint[]> => {
+const mergeReports = async (configIds: string[]): Promise<DelayPoint[]> => {
   const results = await Promise.all(
     configIds.map((ccId) =>
       listReports({
@@ -60,23 +56,18 @@ const mergeReports = async (configIds: string[]): Promise<MergedPoint[]> => {
     ),
   )
 
-  const merged = new Map<string, { checks: number; successes: number; avg_delay: number }>()
+  // Merge by timeframe: weighted average of avg_delay
+  const merged = new Map<string, { total_delay: number; total_checks: number }>()
   for (const arr of results) {
     for (const r of arr) {
       const existing = merged.get(r.timeframe)
       if (existing) {
-        const totalChecks = existing.checks + r.checks
-        existing.avg_delay =
-          totalChecks > 0
-            ? (existing.avg_delay * existing.checks + r.avg_delay * r.checks) / totalChecks
-            : 0
-        existing.checks = totalChecks
-        existing.successes += r.successes
+        existing.total_delay += r.avg_delay * r.checks
+        existing.total_checks += r.checks
       } else {
         merged.set(r.timeframe, {
-          checks: r.checks,
-          successes: r.successes,
-          avg_delay: r.avg_delay,
+          total_delay: r.avg_delay * r.checks,
+          total_checks: r.checks,
         })
       }
     }
@@ -85,10 +76,7 @@ const mergeReports = async (configIds: string[]): Promise<MergedPoint[]> => {
   return Array.from(merged.entries())
     .map(([timeframe, data]) => ({
       timeframe,
-      checks: data.checks,
-      successes: data.successes,
-      uptime: data.checks > 0 ? (data.successes / data.checks) * 100 : 0,
-      avg_delay: data.avg_delay,
+      avg_delay: data.total_checks > 0 ? data.total_delay / data.total_checks : 0,
     }))
     .sort((a, b) => a.timeframe.localeCompare(b.timeframe))
 }
@@ -96,7 +84,6 @@ const mergeReports = async (configIds: string[]): Promise<MergedPoint[]> => {
 const loadData = async () => {
   try {
     if (props.groups && props.groups.length > 0) {
-      // Multi-client mode: fetch per group
       const results = await Promise.all(
         props.groups.map((g, i) =>
           mergeReports(g.checkConfigIds).then((data) => ({
@@ -108,19 +95,17 @@ const loadData = async () => {
       )
       seriesData.value = results
 
-      // Compute union of all timeframes
       const tfSet = new Set<string>()
       for (const s of results) {
         for (const p of s.data) tfSet.add(p.timeframe)
       }
       allTimeframes.value = Array.from(tfSet).sort()
     } else {
-      // Single-line mode (backward compat)
       const configIds =
         props.checkConfigIds && props.checkConfigIds.length > 0 ? props.checkConfigIds : ['']
       const merged = await mergeReports(configIds)
-      const name = props.clientName || 'Uptime'
-      seriesData.value = [{ name, color: '#22c55e', data: merged }]
+      const name = props.clientName || 'Latency'
+      seriesData.value = [{ name, color: '#5470c6', data: merged }]
       allTimeframes.value = merged.map((p) => p.timeframe)
     }
   } catch {
@@ -135,6 +120,7 @@ watch([() => props.groups, () => props.checkConfigIds, () => props.granularity],
 const option = computed(() => ({
   tooltip: {
     trigger: 'axis' as const,
+    valueFormatter: (value: number) => `${Math.round(value)} ms`,
   },
   legend: {
     data: seriesData.value.map((s) => s.name),
@@ -159,16 +145,14 @@ const option = computed(() => ({
   },
   yAxis: {
     type: 'value' as const,
-    min: 0,
-    max: 100,
     axisLabel: {
-      formatter: '{value}%',
+      formatter: '{value} ms',
     },
   },
   series: seriesData.value.map((s) => ({
     name: s.name,
     type: 'line' as const,
-    data: s.data.map((p) => p.uptime),
+    data: s.data.map((p) => p.avg_delay),
     smooth: true,
     areaStyle: {
       opacity: 0.15,

@@ -1,46 +1,108 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Site, Check } from '@/types'
+import type { Site, Check, CheckConfig, Client, Report } from '@/types'
 import { listSites } from '@/api/sites'
 import { listReports } from '@/api/reports'
 import { listChecks } from '@/api/checks'
+import { listCheckConfigs } from '@/api/checkConfigs'
+import { listClients } from '@/api/clients'
 import SiteStatusBadge from '@/components/SiteStatusBadge.vue'
 
 const router = useRouter()
 const sites = ref<Site[]>([])
 const loading = ref(false)
 
-interface SiteInfo {
+// Per-client data
+interface ClientSiteInfo {
+  clientName: string
   monthlyUptime: number
   recentChecks: Check[]
 }
 
-const siteInfos = ref<Record<string, SiteInfo>>({})
+// Key: "siteId:clientId"
+const clientSiteInfos = ref<Record<string, ClientSiteInfo>>({})
+
+// check_configs grouped by site_id -> client_id -> check_config_ids
+const siteClientCCs = ref<Record<string, Record<string, string[]>>>({})
 
 onMounted(async () => {
   loading.value = true
   try {
-    const res = await listSites({ page: 1, page_size: 50 })
-    sites.value = res.items
+    const [sitesRes, ccRes, clientsRes] = await Promise.all([
+      listSites({ page: 1, page_size: 50 }),
+      listCheckConfigs({ page: 1, page_size: 500 }),
+      listClients({ page: 1, page_size: 200 }),
+    ])
+    sites.value = sitesRes.items
 
-    await Promise.all(
-      sites.value.map(async (site) => {
-        try {
-          const [reports, checksRes] = await Promise.all([
-            listReports({ site_id: site.id, type: 1, page: 1, page_size: 1 }),
-            listChecks({ site_id: site.id, page: 1, page_size: 10 }),
-          ])
-          const monthlyUptime = Array.isArray(reports) && reports.length > 0 ? reports[0]!.uptime : 0
-          siteInfos.value[site.id] = {
-            monthlyUptime,
-            recentChecks: checksRes.items,
-          }
-        } catch {
-          siteInfos.value[site.id] = { monthlyUptime: 0, recentChecks: [] }
-        }
-      }),
-    )
+    // Build client map
+    const clientMap: Record<string, Client> = {}
+    for (const c of clientsRes.items) {
+      clientMap[c.id] = c
+    }
+
+    // Group check_configs: site_id -> client_id -> [check_config_ids]
+    const grouping: Record<string, Record<string, string[]>> = {}
+    for (const cc of ccRes.items) {
+      if (!grouping[cc.site_id]) grouping[cc.site_id] = {}
+      if (!grouping[cc.site_id]![cc.client_id]) grouping[cc.site_id]![cc.client_id] = []
+      grouping[cc.site_id]![cc.client_id]!.push(cc.id)
+    }
+    siteClientCCs.value = grouping
+
+    // Fetch per-client data for all sites
+    const infoPromises: Promise<void>[] = []
+    for (const site of sites.value) {
+      const clientGroups = grouping[site.id]
+      if (!clientGroups) continue
+
+      for (const [clientId, ccIds] of Object.entries(clientGroups)) {
+        const key = `${site.id}:${clientId}`
+        const client = clientMap[clientId]
+        const clientName = client ? client.name : clientId.substring(0, 8) + '...'
+
+        infoPromises.push(
+          (async () => {
+            try {
+              // Fetch reports for each check_config and merge
+              const reportsArr = await Promise.all(
+                ccIds.map((ccId) =>
+                  listReports({ site_id: site.id, type: 1, check_config_id: ccId, page: 1, page_size: 1 })
+                    .catch(() => [] as Report[]),
+                ),
+              )
+              let combinedChecks = 0
+              let combinedSuccesses = 0
+              for (const arr of reportsArr) {
+                if (arr.length > 0) {
+                  combinedChecks += arr[0]!.checks
+                  combinedSuccesses += arr[0]!.successes
+                }
+              }
+              const uptime = combinedChecks > 0 ? (combinedSuccesses / combinedChecks) * 100 : 0
+
+              // Fetch recent checks
+              const checksRes = await listChecks({
+                site_id: site.id,
+                client_id: clientId,
+                page: 1,
+                page_size: 10,
+              })
+
+              clientSiteInfos.value[key] = {
+                clientName,
+                monthlyUptime: uptime,
+                recentChecks: checksRes.items,
+              }
+            } catch {
+              clientSiteInfos.value[key] = { clientName, monthlyUptime: 0, recentChecks: [] }
+            }
+          })(),
+        )
+      }
+    }
+    await Promise.all(infoPromises)
   } catch {
     sites.value = []
   } finally {
@@ -57,6 +119,12 @@ const groupedSites = computed(() => {
   }
   return groups
 })
+
+const getSiteClientKeys = (siteId: string): string[] => {
+  const groups = siteClientCCs.value[siteId]
+  if (!groups) return []
+  return Object.keys(groups).map((clientId) => `${siteId}:${clientId}`)
+}
 
 const goToDetail = (id: string) => {
   router.push(`/${id}`)
@@ -89,43 +157,64 @@ const slaColor = (uptime: number) => {
           <div
             v-for="site in groupSites"
             :key="site.id"
-            @click="goToDetail(site.id)"
-            style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 8px; cursor: pointer; transition: background 0.15s;"
-            @mouseenter="($event.currentTarget as HTMLElement).style.background = '#f9fafb'"
-            @mouseleave="($event.currentTarget as HTMLElement).style.background = 'white'"
+            style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 8px;"
           >
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+            <!-- Site header: clickable -->
+            <div
+              @click="goToDetail(site.id)"
+              style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; cursor: pointer;"
+            >
               <SiteStatusBadge :status="site.status" />
               <div style="flex: 1;">
                 <div style="font-weight: 500;">{{ site.name }}</div>
                 <div style="font-size: 12px; color: #888;">{{ site.url }}</div>
               </div>
-              <div v-if="siteInfos[site.id]" style="text-align: right;">
-                <div style="font-size: 12px; color: #888;">Monthly SLA</div>
-                <div style="font-size: 18px; font-weight: 600;" :style="{ color: slaColor(siteInfos[site.id]!.monthlyUptime) }">
-                  {{ siteInfos[site.id]!.monthlyUptime.toFixed(2) }}%
+            </div>
+
+            <!-- Per-client stats -->
+            <div v-if="getSiteClientKeys(site.id).length > 0">
+              <div
+                v-for="clientKey in getSiteClientKeys(site.id)"
+                :key="clientKey"
+                style="padding: 8px 0; border-top: 1px solid #f3f4f6;"
+              >
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="font-size: 13px; font-weight: 500; color: #4b5563;">
+                    {{ clientSiteInfos[clientKey]?.clientName || '...' }}
+                  </span>
+                  <div v-if="clientSiteInfos[clientKey]" style="text-align: right;">
+                    <span style="font-size: 11px; color: #888;">SLA</span>
+                    <span style="font-size: 14px; font-weight: 600; margin-left: 4px;" :style="{ color: slaColor(clientSiteInfos[clientKey]!.monthlyUptime) }">
+                      {{ clientSiteInfos[clientKey]!.monthlyUptime.toFixed(1) }}%
+                    </span>
+                  </div>
+                </div>
+                <!-- Recent check bars -->
+                <div v-if="clientSiteInfos[clientKey]" style="display: flex; gap: 3px; align-items: flex-end; height: 20px;">
+                  <div
+                    v-for="(check, idx) in clientSiteInfos[clientKey]!.recentChecks"
+                    :key="idx"
+                    :style="{
+                      width: '100%',
+                      flex: 1,
+                      height: check.status === 0 ? '100%' : '50%',
+                      background: checkBarColor(check),
+                      borderRadius: '2px',
+                      opacity: check.status === 0 ? 0.8 : 1,
+                    }"
+                    :title="`${new Date(check.timestamp * 1000).toLocaleString()} - ${check.status === 0 ? 'OK' : 'Error'}`"
+                  />
+                  <div
+                    v-if="clientSiteInfos[clientKey] && clientSiteInfos[clientKey]!.recentChecks.length === 0"
+                    style="flex: 1; height: 4px; background: #e5e7eb; border-radius: 2px;"
+                  />
                 </div>
               </div>
             </div>
 
-            <div v-if="siteInfos[site.id]" style="display: flex; gap: 3px; align-items: flex-end; height: 28px;">
-              <div
-                v-for="(check, idx) in siteInfos[site.id]!.recentChecks"
-                :key="idx"
-                :style="{
-                  width: '100%',
-                  flex: 1,
-                  height: check.status === 0 ? '100%' : '60%',
-                  background: checkBarColor(check),
-                  borderRadius: '2px',
-                  opacity: check.status === 0 ? 0.8 : 1,
-                }"
-                :title="`${new Date(check.timestamp * 1000).toLocaleString()} - ${check.status === 0 ? 'OK' : 'Error'}`"
-              />
-              <div
-                v-if="siteInfos[site.id] && siteInfos[site.id]!.recentChecks.length === 0"
-                style="flex: 1; height: 4px; background: #e5e7eb; border-radius: 2px;"
-              />
+            <!-- Fallback when no clients -->
+            <div v-else style="padding-top: 8px; border-top: 1px solid #f3f4f6;">
+              <p style="font-size: 12px; color: #999; margin-bottom: 8px;">No clients configured</p>
             </div>
           </div>
         </div>
