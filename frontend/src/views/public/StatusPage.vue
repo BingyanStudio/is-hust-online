@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import type { Site, Check, CheckConfig, Client, Report } from '@/types'
-import { listSites } from '@/api/sites'
-import { listReports } from '@/api/reports'
-import { listChecks } from '@/api/checks'
 import { listCheckConfigs } from '@/api/checkConfigs'
+import { listChecks } from '@/api/checks'
 import { listClients } from '@/api/clients'
+import { listReports } from '@/api/reports'
+import { listSites } from '@/api/sites'
 import SiteStatusBadge from '@/components/SiteStatusBadge.vue'
+import type { Check, Client, Report, Site } from '@/types'
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const sites = ref<Site[]>([])
+const searchQuery = ref('')
 const loading = ref(false)
 
 // Per-client data
@@ -110,14 +111,69 @@ onMounted(async () => {
   }
 })
 
+const filteredSites = computed(() => {
+  if (!searchQuery.value.trim()) return sites.value
+  const q = searchQuery.value.toLowerCase()
+  return sites.value.filter(
+    (s) => s.name.toLowerCase().includes(q) || s.url.toLowerCase().includes(q),
+  )
+})
+
 const groupedSites = computed(() => {
   const groups: Record<string, Site[]> = {}
-  for (const site of sites.value) {
+  for (const site of filteredSites.value) {
     const type = site.type || 'Other'
     if (!groups[type]) groups[type] = []
     groups[type].push(site)
   }
   return groups
+})
+
+const typeKeys = computed(() => Object.keys(groupedSites.value))
+
+const scrollToType = (type: string) => {
+  document.getElementById(`type-${type}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+const siteStatuses = computed(() => {
+  const online = new Set<string>()
+  const offline = new Set<string>()
+
+  for (const site of sites.value) {
+    const clientKeys = getSiteClientKeys(site.id)
+    if (clientKeys.length === 0) {
+      offline.add(site.id)
+      continue
+    }
+    const hasSuccess = clientKeys.some((key) => {
+      const info = clientSiteInfos.value[key]
+      return info?.recentChecks.some((c) => c.status === 0)
+    })
+    if (hasSuccess) {
+      online.add(site.id)
+    } else {
+      offline.add(site.id)
+    }
+  }
+  return { online, offline }
+})
+
+const overallStats = computed(() => {
+  const total = sites.value.length
+  const onlineCount = siteStatuses.value.online.size
+  const offlineCount = total - onlineCount
+
+  let slaSum = 0
+  let slaCount = 0
+  for (const info of Object.values(clientSiteInfos.value)) {
+    if (info.recentChecks.length > 0) {
+      slaSum += info.monthlyUptime
+      slaCount++
+    }
+  }
+  const overallSLA = slaCount > 0 ? slaSum / slaCount : 0
+
+  return { total, onlineCount, offlineCount, overallSLA }
 })
 
 const getSiteClientKeys = (siteId: string): string[] => {
@@ -144,12 +200,59 @@ const slaColor = (uptime: number) => {
 
 <template>
   <div style="max-width: 800px; margin: 40px auto; padding: 0 20px; font-family: system-ui, sans-serif;">
-    <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">Is HUST Online?</h1>
-    <p style="color: #666; margin-bottom: 32px;">Real-time status monitoring for HUST websites</p>
+    <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">华中大在线吗？</h1>
+    <p style="color: #666; margin-bottom: 32px;">实时检测华科各类网络服务状态</p>
+
+    <!-- Global stats -->
+    <div v-if="sites.length > 0" style="display: flex; gap: 24px; margin-bottom: 24px; padding: 16px 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e5e7eb;">
+      <div style="text-align: center; flex: 1;">
+        <div style="font-size: 24px; font-weight: 700;">{{ overallStats.total }}</div>
+        <div style="font-size: 12px; color: #888;">总数</div>
+      </div>
+      <div style="text-align: center; flex: 1;">
+        <div style="font-size: 24px; font-weight: 700; color: #22c55e;">{{ overallStats.onlineCount }}</div>
+        <div style="font-size: 12px; color: #888;">在线</div>
+      </div>
+      <div style="text-align: center; flex: 1;">
+        <div style="font-size: 24px; font-weight: 700; color: #ef4444;">{{ overallStats.offlineCount }}</div>
+        <div style="font-size: 12px; color: #888;">离线</div>
+      </div>
+      <div style="text-align: center; flex: 1;">
+        <div style="font-size: 24px; font-weight: 700;" :style="{ color: slaColor(overallStats.overallSLA) }">
+          {{ overallStats.overallSLA.toFixed(1) }}%
+        </div>
+        <div style="font-size: 12px; color: #888;">SLA</div>
+      </div>
+    </div>
 
     <div v-loading="loading">
-      <template v-if="sites.length > 0">
-        <div v-for="(groupSites, type) in groupedSites" :key="type" style="margin-bottom: 32px;">
+      <!-- Search -->
+      <el-input
+        v-model="searchQuery"
+        placeholder="搜索站点..."
+        clearable
+        style="margin-bottom: 16px;"
+      >
+        <template #prefix>
+          <span style="color: #a8abb2;">&#128269;</span>
+        </template>
+      </el-input>
+
+      <!-- Type navigation -->
+      <div v-if="typeKeys.length > 1" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px;">
+        <el-tag
+          v-for="type in typeKeys"
+          :key="type"
+          type="primary"
+          style="cursor: pointer;"
+          @click="scrollToType(type)"
+        >
+          {{ type }}
+        </el-tag>
+      </div>
+
+      <template v-if="Object.keys(groupedSites).length > 0">
+        <div v-for="(groupSites, type) in groupedSites" :key="type" :id="'type-' + type" style="margin-bottom: 32px;">
           <h2 style="font-size: 15px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
             {{ type }}
           </h2>
@@ -214,14 +317,17 @@ const slaColor = (uptime: number) => {
 
             <!-- Fallback when no clients -->
             <div v-else style="padding-top: 8px; border-top: 1px solid #f3f4f6;">
-              <p style="font-size: 12px; color: #999; margin-bottom: 8px;">No clients configured</p>
+              <p style="font-size: 12px; color: #999; margin-bottom: 8px;">还没有配置客户端</p>
             </div>
           </div>
         </div>
       </template>
 
       <p v-if="!loading && sites.length === 0" style="color: #999; text-align: center; padding: 40px 0;">
-        No sites configured yet.
+        还没有配置站点
+      </p>
+      <p v-if="!loading && sites.length > 0 && Object.keys(groupedSites).length === 0" style="color: #999; text-align: center; padding: 40px 0;">
+        没有匹配您搜索的站点
       </p>
     </div>
   </div>

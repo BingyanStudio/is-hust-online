@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import type { CheckConfig, Site, Client, PaginatedResponse } from '@/types'
-import { listCheckConfigs, createCheckConfig, updateCheckConfig, deleteCheckConfig } from '@/api/checkConfigs'
-import { listSites } from '@/api/sites'
-import { listClients } from '@/api/clients'
+import { createCheckConfig, deleteCheckConfig, listCheckConfigs, updateCheckConfig } from '@/api/checkConfigs'
 import { loggedIn } from '@/api/client'
+import { listClients } from '@/api/clients'
+import { listSites } from '@/api/sites'
+import type { CheckConfig, Client, PaginatedResponse, Site } from '@/types'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, watch } from 'vue'
 
 const data = ref<CheckConfig[]>([])
 const sites = ref<Site[]>([])

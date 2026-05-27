@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import type { Site, CheckConfig, Client } from '@/types'
-import { getSite } from '@/api/sites'
 import { listCheckConfigs } from '@/api/checkConfigs'
 import { listClients } from '@/api/clients'
-import UptimeChart from '@/components/UptimeChart.vue'
-import LatencyChart from '@/components/LatencyChart.vue'
+import { getSite } from '@/api/sites'
 import CheckHistoryTable from '@/components/CheckHistoryTable.vue'
+import LatencyChart from '@/components/LatencyChart.vue'
 import SiteStatusBadge from '@/components/SiteStatusBadge.vue'
+import UptimeChart from '@/components/UptimeChart.vue'
+import type { Client, Site } from '@/types'
+import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
@@ -80,7 +80,7 @@ const clientStatusColor = (status: number) => {
 <template>
   <div style="max-width: 960px; margin: 40px auto; padding: 0 20px; font-family: system-ui, sans-serif;">
     <el-button text @click="router.push('/')" style="margin-bottom: 16px;">
-      &larr; Back to status page
+      &larr; 回到状态页
     </el-button>
 
     <div v-loading="loading">
@@ -97,14 +97,14 @@ const clientStatusColor = (status: number) => {
           <!-- Shared granularity control for both charts -->
           <div style="margin-bottom: 16px;">
             <el-radio-group v-model="chartGranularity" size="small">
-              <el-radio-button :value="0">Hourly</el-radio-button>
-              <el-radio-button :value="1">Daily</el-radio-button>
-              <el-radio-button :value="2">Monthly</el-radio-button>
+              <el-radio-button :value="0">每小时</el-radio-button>
+              <el-radio-button :value="1">每日</el-radio-button>
+              <el-radio-button :value="2">每月</el-radio-button>
             </el-radio-group>
           </div>
 
           <!-- Charts: all clients overlaid -->
-          <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">Uptime</h2>
+          <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">在线状态</h2>
           <UptimeChart
             :site-id="id"
             :groups="clientGroups.map(g => ({ name: g.client.name, checkConfigIds: g.checkConfigIds }))"
@@ -112,7 +112,7 @@ const clientStatusColor = (status: number) => {
             :show-controls="false"
           />
 
-          <h2 style="font-size: 16px; font-weight: 600; margin: 24px 0 12px;">Latency</h2>
+          <h2 style="font-size: 16px; font-weight: 600; margin: 24px 0 12px;">延迟</h2>
           <LatencyChart
             :site-id="id"
             :groups="clientGroups.map(g => ({ name: g.client.name, checkConfigIds: g.checkConfigIds }))"
@@ -121,7 +121,7 @@ const clientStatusColor = (status: number) => {
           />
 
           <!-- Client tabs: info + check records -->
-          <h2 style="font-size: 16px; font-weight: 600; margin: 24px 0 12px;">Recent Checks</h2>
+          <h2 style="font-size: 16px; font-weight: 600; margin: 24px 0 12px;">最近检测</h2>
           <el-tabs v-model="activeTab">
             <el-tab-pane
               v-for="group in clientGroups"

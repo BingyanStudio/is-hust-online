@@ -74,8 +74,16 @@ const handleSubmit = async () => {
       await updateClient(editingClient.value.id, form.value)
       ElMessage.success('Client updated')
     } else {
-      await createClient(form.value)
+      const client = await createClient(form.value)
       ElMessage.success('Client created')
+      ElMessageBox.alert(
+        `The client token is: ${client.token}`,
+        'Client Created',
+        {
+          confirmButtonText: 'Copy Token',
+          callback: () => copyToClipboard(client.token),
+        },
+      )
     }
     dialogVisible.value = false
     fetchData()
@@ -108,6 +116,15 @@ const statusType = (s: number): 'success' | 'warning' | 'danger' => {
 }
 
 const formatTime = (ts: number) => ts ? new Date(ts * 1000).toLocaleString() : '-'
+
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('Copied to clipboard')
+  } catch {
+    ElMessage.error('Failed to copy')
+  }
+}
 </script>
 
 <template>
@@ -157,6 +174,12 @@ const formatTime = (ts: number) => ts ? new Date(ts * 1000).toLocaleString() : '
         </el-form-item>
         <el-form-item label="Location">
           <el-input v-model="form.location" />
+        </el-form-item>
+        <el-form-item v-if="editingClient" label="Token">
+          <div style="display: flex; gap: 8px;">
+            <el-input :model-value="editingClient.token" readonly style="flex: 1;" />
+            <el-button @click="copyToClipboard(editingClient!.token)">Copy</el-button>
+          </div>
         </el-form-item>
         <el-form-item label="Capabilities">
           <el-checkbox-group v-model="capabilityChecks" @change="syncChecksToCapabilities">

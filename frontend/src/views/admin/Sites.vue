@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import type { Site, PaginatedResponse } from '@/types'
-import { listSites, createSite, updateSite, deleteSite } from '@/api/sites'
 import { loggedIn } from '@/api/client'
+import { createSite, deleteSite, listSites, updateSite } from '@/api/sites'
 import SiteStatusBadge from '@/components/SiteStatusBadge.vue'
+import type { PaginatedResponse, Site } from '@/types'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, watch } from 'vue'
 
 const data = ref<Site[]>([])
 const loading = ref(false)

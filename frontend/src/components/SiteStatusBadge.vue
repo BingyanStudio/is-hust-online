@@ -6,11 +6,11 @@ defineProps<{
 const label = (status: number) => {
   switch (status) {
     case 0:
-      return 'Enabled'
+      return '已启用'
     case 1:
-      return 'Disabled'
+      return '已禁用'
     default:
-      return 'Unknown'
+      return '未知'
   }
 }
 </script>
