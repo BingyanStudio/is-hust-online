@@ -87,9 +87,9 @@ const clientStatusColor = (status: number) => {
       <template v-if="site">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
           <SiteStatusBadge :status="site.status" />
-          <div>
-            <h1 style="font-size: 22px; font-weight: 600; margin: 0;">{{ site.name }}</h1>
-            <a :href="site.url" target="_blank" style="color: #2563eb; font-size: 14px;">{{ site.url }}</a>
+          <div style="flex: 1; min-width: 0; overflow: hidden;">
+            <h1 style="font-size: 22px; font-weight: 600; margin: 0; overflow-wrap: break-word;">{{ site.name }}</h1>
+            <a :href="site.url" target="_blank" style="color: #2563eb; font-size: 14px; overflow-wrap: break-word; word-break: break-all;">{{ site.url }}</a>
           </div>
         </div>
 
@@ -129,10 +129,10 @@ const clientStatusColor = (status: number) => {
               :label="group.client.name"
               :name="group.client.id"
             >
-              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 16px; background: var(--bg-secondary); border-radius: 6px;">
-                <div>
-                  <div style="font-weight: 500; font-size: 15px;">{{ group.client.name }}</div>
-                  <div style="font-size: 12px; color: var(--text-dim);">{{ group.client.location || 'No location' }}</div>
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 16px; background: var(--bg-secondary); border-radius: 6px; overflow: hidden;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-weight: 500; font-size: 15px; overflow-wrap: break-word;">{{ group.client.name }}</div>
+                  <div style="font-size: 12px; color: var(--text-dim); overflow-wrap: break-word;">{{ group.client.location || 'No location' }}</div>
                 </div>
                 <el-tag size="small" :color="clientStatusColor(group.client.status)" style="color: white; border: none;">
                   {{ clientStatusLabel(group.client.status) }}
