@@ -20,7 +20,7 @@ const capabilityOptions = [
 
 const dialogVisible = ref(false)
 const editingClient = ref<Client | null>(null)
-const form = ref({ name: '', location: '', capabilities: 0, labels: [] as string[], status: 0 })
+const form = ref({ name: '', location: '', capabilities: 0, labels: [] as string[], status: 1 })
 const capabilityChecks = ref<number[]>([])
 
 const syncCapabilitiesToChecks = () => {
@@ -50,7 +50,7 @@ watch(loggedIn, (v) => { if (v) fetchData() }, { immediate: true })
 
 const openCreate = () => {
   editingClient.value = null
-  form.value = { name: '', location: '', capabilities: 0, labels: [], status: 0 }
+  form.value = { name: '', location: '', capabilities: 0, labels: [], status: 1 }
   syncCapabilitiesToChecks()
   dialogVisible.value = true
 }
@@ -96,14 +96,14 @@ const handleDelete = async (client: Client) => {
 }
 
 const statusLabel = (s: number) => {
-  if (s === 0) return 'Online'
-  if (s === 1) return 'Offline'
+  if (s === 1) return 'Online'
+  if (s === 4) return 'Offline'
   return 'Disabled'
 }
 
 const statusType = (s: number): 'success' | 'warning' | 'danger' => {
-  if (s === 0) return 'success'
-  if (s === 1) return 'warning'
+  if (s === 1) return 'success'
+  if (s === 4) return 'warning'
   return 'danger'
 }
 
@@ -167,9 +167,9 @@ const formatTime = (ts: number) => ts ? new Date(ts * 1000).toLocaleString() : '
         </el-form-item>
         <el-form-item label="Status" v-if="editingClient">
           <el-select v-model="form.status">
-            <el-option :value="0" label="Online" />
-            <el-option :value="1" label="Offline" />
-            <el-option :value="2" label="Disabled" />
+            <el-option :value="1" label="Online" />
+            <el-option :value="4" label="Offline" />
+            <el-option :value="5" label="Disabled" />
           </el-select>
         </el-form-item>
       </el-form>

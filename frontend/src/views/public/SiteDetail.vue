@@ -65,14 +65,14 @@ onMounted(async () => {
 })
 
 const clientStatusLabel = (status: number) => {
-  if (status === 0) return 'Online'
-  if (status === 1) return 'Offline'
+  if (status === 1) return 'Online'
+  if (status === 4) return 'Offline'
   return 'Disabled'
 }
 
 const clientStatusColor = (status: number) => {
-  if (status === 0) return '#22c55e'
-  if (status === 1) return '#f59e0b'
+  if (status === 1) return '#22c55e'
+  if (status === 4) return '#f59e0b'
   return '#9ca3af'
 }
 </script>

@@ -121,6 +121,17 @@ func main() {
 			})
 			if err != nil {
 				slog.Error("failed to watch tasks", "error", err)
+				// Re-register to ensure the dispatcher has us
+				if regResp, regErr := cmClient.Register(ctx, &myproto.RegisterRequest{
+					ClientInfo: &myproto.ClientInfo{
+						Ip:           ip,
+						Capabilities: caps,
+					},
+				}); regErr != nil {
+					slog.Error("failed to re-register", "error", regErr)
+				} else if regResp.Success {
+					slog.Info("re-registered successfully")
+				}
 				time.Sleep(5 * time.Second)
 				continue
 			}

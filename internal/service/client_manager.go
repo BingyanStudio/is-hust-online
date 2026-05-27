@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/BingyanStudio/is-hust-online/internal/dao"
+	"github.com/BingyanStudio/is-hust-online/internal/model"
 	myproto "github.com/BingyanStudio/is-hust-online/pkg/proto"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/grpc/codes"
@@ -54,7 +55,7 @@ func (s *ClientManagerService) Register(ctx context.Context, req *myproto.Regist
 	}
 
 	err = dao.UpdateClient(ctx, client.ID, bson.M{
-		"status":       0, // CLIENT_STATUS_ONLINE
+		"status":       model.CLIENT_STATUS_ONLINE,
 		"ip":           ip,
 		"last_online":  time.Now().Unix(),
 		"capabilities": cap,

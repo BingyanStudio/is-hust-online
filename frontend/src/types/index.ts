@@ -14,7 +14,7 @@ export interface Client {
   name: string
   location: string
   capabilities: number
-  status: number // 0=online, 1=offline, 2=disabled
+  status: number // 1=online, 4=offline, 5=disabled
   token: string
   ip: string
   last_online: number

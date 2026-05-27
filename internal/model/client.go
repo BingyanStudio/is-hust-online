@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	CLIENT_STATUS_ONLINE = iota
-	CLIENT_STATUS_OFFLINE
-	CLIENT_STATUS_DISABLED
+	CLIENT_STATUS_ONLINE   = 1 // matches proto ClientStatus_CLIENT_STATUS_ONLINE
+	CLIENT_STATUS_OFFLINE  = 4 // matches proto ClientStatus_CLIENT_STATUS_OFFLINE
+	CLIENT_STATUS_DISABLED = 5 // no direct proto equivalent, placed after OFFLINE
 )
 
 type Client struct {

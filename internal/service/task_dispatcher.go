@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/BingyanStudio/is-hust-online/internal/dao"
+	"github.com/BingyanStudio/is-hust-online/internal/model"
 	myproto "github.com/BingyanStudio/is-hust-online/pkg/proto"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -47,7 +48,7 @@ func (d *TaskDispatcher) UnregisterClient(clientID string) {
 	}
 	clientID_o, _ := bson.ObjectIDFromHex(clientID)
 	_ = dao.UpdateClient(context.TODO(), clientID_o, bson.M{
-		"status": 1, // CLIENT_STATUS_OFFLINE
+		"status": model.CLIENT_STATUS_OFFLINE,
 	})
 }
 

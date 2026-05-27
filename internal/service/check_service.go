@@ -35,7 +35,6 @@ func (s *CheckServiceService) WatchTasks(req *myproto.WatchTasksRequest, stream 
 	slog.Info("client watching tasks", "client_id", clientID)
 
 	defer func() {
-		s.dispatcher.UnregisterClient(clientID)
 		slog.Info("client stopped watching tasks", "client_id", clientID)
 	}()
 
