@@ -16,7 +16,7 @@ func InitStatic(e *echo.Echo, fsys fs.FS) {
 	}
 
 	e.Any("/*", func(c *echo.Context) error {
-		path := strings.TrimPrefix(c.Path(), "/")
+		path := strings.TrimPrefix(c.Request().URL.Path, "/")
 
 		if path == "" {
 			path = "index.html"
