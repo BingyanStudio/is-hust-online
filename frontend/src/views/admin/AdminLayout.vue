@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { setAuth, isAuthenticated, on401 } from '@/api/client'
+import { setAuth, markLoggedIn, isAuthenticated, on401, clearAuth } from '@/api/client'
 import { listSites } from '@/api/sites'
 
 const router = useRouter()
@@ -32,10 +32,11 @@ const handleLogin = async () => {
   try {
     setAuth(loginForm.value.username, loginForm.value.password)
     await listSites({ page: 1, page_size: 1 })
+    markLoggedIn()
     loginVisible.value = false
     ElMessage.success('Logged in')
   } catch {
-    setAuth('', '')
+    clearAuth()
     ElMessage.error('Invalid username or password')
   } finally {
     loginLoading.value = false

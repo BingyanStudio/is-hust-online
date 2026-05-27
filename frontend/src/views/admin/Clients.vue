@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { Client, PaginatedResponse } from '@/types'
 import { listClients, createClient, updateClient, deleteClient } from '@/api/clients'
@@ -47,6 +48,7 @@ const fetchData = async () => {
 }
 
 watch(loggedIn, (v) => { if (v) fetchData() }, { immediate: true })
+useAutoRefresh(fetchData)
 
 const openCreate = () => {
   editingClient.value = null
@@ -137,6 +139,7 @@ const copyToClipboard = async (text: string) => {
     <el-table :data="data" v-loading="loading" stripe>
       <el-table-column prop="name" label="Name" />
       <el-table-column prop="location" label="Location" />
+      <el-table-column prop="ip" label="IP" width="210" />
       <el-table-column label="Status" width="120">
         <template #default="{ row }">
           <el-tag :type="statusType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
@@ -187,6 +190,17 @@ const copyToClipboard = async (text: string) => {
               {{ opt.label }}
             </el-checkbox>
           </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="Labels">
+          <el-select
+            v-model="form.labels"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            placeholder="Add labels..."
+            style="width: 100%;"
+          />
         </el-form-item>
         <el-form-item label="Status" v-if="editingClient">
           <el-select v-model="form.status">

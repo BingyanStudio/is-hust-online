@@ -1,15 +1,39 @@
 import axios from 'axios'
 import { ref } from 'vue'
 
+const AUTH_KEY = 'admin_auth'
+
 let authUsername = ''
 let authPassword = ''
 let onUnauthorized: (() => void) | null = null
 
 export const loggedIn = ref(false)
 
+// Restore persisted auth (verified in a previous session)
+try {
+  const saved = localStorage.getItem(AUTH_KEY)
+  if (saved) {
+    const parsed = JSON.parse(saved)
+    if (parsed.username && parsed.password) {
+      authUsername = parsed.username
+      authPassword = parsed.password
+      loggedIn.value = true
+    }
+  }
+} catch {}
+
 export function setAuth(username: string, password: string) {
   authUsername = username
   authPassword = password
+  if (username && password) {
+    localStorage.setItem(AUTH_KEY, JSON.stringify({ username, password }))
+  } else {
+    localStorage.removeItem(AUTH_KEY)
+    loggedIn.value = false
+  }
+}
+
+export function markLoggedIn() {
   loggedIn.value = true
 }
 
@@ -17,6 +41,7 @@ export function clearAuth() {
   authUsername = ''
   authPassword = ''
   loggedIn.value = false
+  localStorage.removeItem(AUTH_KEY)
 }
 
 export function isAuthenticated() {

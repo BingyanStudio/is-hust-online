@@ -5,6 +5,7 @@ import SiteStatusBadge from '@/components/SiteStatusBadge.vue'
 import type { PaginatedResponse, Site } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, watch } from 'vue'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 
 const data = ref<Site[]>([])
 const loading = ref(false)
@@ -30,6 +31,7 @@ const fetchData = async () => {
 }
 
 watch(loggedIn, (v) => { if (v) fetchData() }, { immediate: true })
+useAutoRefresh(fetchData)
 
 const openCreate = () => {
   editingSite.value = null

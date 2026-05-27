@@ -168,7 +168,10 @@ const option = computed(() => ({
   series: seriesData.value.map((s) => ({
     name: s.name,
     type: 'line' as const,
-    data: s.data.map((p) => p.uptime),
+    data: allTimeframes.value.map((tf) => {
+      const pt = s.data.find((p) => p.timeframe === tf)
+      return pt ? pt.uptime : null
+    }),
     smooth: true,
     areaStyle: {
       opacity: 0.15,

@@ -94,6 +94,9 @@ const typeLabel = (type: number) => {
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="结果" min-width="140">
+        <template #default="{ row }">{{ row.result }}</template>
+      </el-table-column>
       <el-table-column label="延迟 (ms)">
         <template #default="{ row }">{{ row.delay }}</template>
       </el-table-column>

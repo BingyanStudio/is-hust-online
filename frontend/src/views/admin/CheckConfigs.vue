@@ -6,6 +6,7 @@ import { listSites } from '@/api/sites'
 import type { CheckConfig, Client, PaginatedResponse, Site } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, watch } from 'vue'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 
 const data = ref<CheckConfig[]>([])
 const sites = ref<Site[]>([])
@@ -58,6 +59,7 @@ watch(loggedIn, (v) => {
     loadOptions()
   }
 }, { immediate: true })
+useAutoRefresh(fetchData)
 
 const siteName = (id: string) => sites.value.find((s) => s.id === id)?.name || id
 const clientName = (id: string) => clients.value.find((c) => c.id === id)?.name || id
