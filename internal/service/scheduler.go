@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/BingyanStudio/is-hust-online/internal/checktype"
+	"github.com/BingyanStudio/is-hust-online/internal/config"
 	"github.com/BingyanStudio/is-hust-online/internal/dao"
 	"github.com/BingyanStudio/is-hust-online/internal/model"
 	myproto "github.com/BingyanStudio/is-hust-online/pkg/proto"
@@ -33,6 +34,7 @@ func NewScheduler(ctx context.Context, dispatcher *TaskDispatcher) *Scheduler {
 }
 
 func (s *Scheduler) Start() {
+	// 主调度器: 每 10 秒执行一次
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
@@ -48,12 +50,45 @@ func (s *Scheduler) Start() {
 			}
 		}
 	}()
+
+	// 清理协程: 每 5 分钟清理一次过期 check 记录
+	go func() {
+		cleanupTicker := time.NewTicker(5 * time.Minute)
+		defer cleanupTicker.Stop()
+
+		for {
+			select {
+			case <-cleanupTicker.C:
+				s.cleanupOldChecks()
+			case <-s.stopCh:
+				return
+			case <-s.ctx.Done():
+				return
+			}
+		}
+	}()
+
 	slog.Info("scheduler started")
 }
 
 func (s *Scheduler) Stop() {
 	close(s.stopCh)
 	slog.Info("scheduler stopped")
+}
+
+func (s *Scheduler) cleanupOldChecks() {
+	retentionHours := config.C.CheckRetentionHours
+	cutoff := time.Now().Add(-time.Duration(retentionHours) * time.Hour).Unix()
+
+	deleted, err := dao.DeleteChecksBefore(s.ctx, cutoff)
+	if err != nil {
+		slog.Error("scheduler: failed to cleanup old checks", "error", err)
+		return
+	}
+
+	if deleted > 0 {
+		slog.Info("scheduler: cleaned up old checks", "deleted", deleted, "retention_hours", retentionHours)
+	}
 }
 
 func parseSchedule(expr string) (cron.Schedule, error) {

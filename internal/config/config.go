@@ -30,13 +30,14 @@ type GRPCConfig struct {
 }
 
 type AppConfig struct {
-	Captcha           CaptchaConfig `mapstructure:"captcha" json:"captcha" yaml:"captcha"`
-	Mongo             MongoConfig   `mapstructure:"mongo" json:"mongo" yaml:"mongo"`
-	Debug             bool          `mapstructure:"debug" json:"debug" yaml:"debug"`
-	Port              int           `mapstructure:"port" json:"port" yaml:"port"`
-	GRPC              GRPCConfig    `mapstructure:"grpc" json:"grpc" yaml:"grpc"`
-	BasicAuthUser     string        `mapstructure:"basic_auth_user" json:"basic_auth_user" yaml:"basic_auth_user"`
-	BasicAuthPassword string        `mapstructure:"basic_auth_password" json:"basic_auth_password" yaml:"basic_auth_password"`
+	Captcha             CaptchaConfig `mapstructure:"captcha" json:"captcha" yaml:"captcha"`
+	Mongo               MongoConfig   `mapstructure:"mongo" json:"mongo" yaml:"mongo"`
+	Debug               bool          `mapstructure:"debug" json:"debug" yaml:"debug"`
+	Port                int           `mapstructure:"port" json:"port" yaml:"port"`
+	GRPC                GRPCConfig    `mapstructure:"grpc" json:"grpc" yaml:"grpc"`
+	BasicAuthUser       string        `mapstructure:"basic_auth_user" json:"basic_auth_user" yaml:"basic_auth_user"`
+	BasicAuthPassword   string        `mapstructure:"basic_auth_password" json:"basic_auth_password" yaml:"basic_auth_password"`
+	CheckRetentionHours int           `mapstructure:"check_retention_hours" json:"check_retention_hours" yaml:"check_retention_hours"`
 }
 
 var C AppConfig
@@ -64,6 +65,12 @@ func LoadConfig() error {
 	if err := v.Unmarshal(&C); err != nil {
 		return err
 	}
+
+	// 默认值：check 记录保留 24 小时
+	if C.CheckRetentionHours <= 0 {
+		C.CheckRetentionHours = 24
+	}
+
 	return nil
 }
 

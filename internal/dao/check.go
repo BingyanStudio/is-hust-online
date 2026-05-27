@@ -43,3 +43,15 @@ func FindChecks(ctx context.Context, filter bson.M, page, pageSize int64) ([]mod
 	}
 	return checks, total, nil
 }
+
+// DeleteChecksBefore 删除 timestamp 早于 before 的所有 check 记录。
+// 返回删除的文档数。
+func DeleteChecksBefore(ctx context.Context, before int64) (int64, error) {
+	result, err := db.MongoDB.Collection(checkCollection).DeleteMany(ctx, bson.M{
+		"timestamp": bson.M{"$lt": before},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return result.DeletedCount, nil
+}
