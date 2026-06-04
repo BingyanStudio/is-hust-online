@@ -35,17 +35,17 @@ onMounted(async () => {
       listCheckConfigs({ page: 1, page_size: 500 }),
       listClients({ page: 1, page_size: 200 }),
     ])
-    sites.value = sitesRes.items
+    sites.value = sitesRes.items ?? []
 
     // Build client map
     const clientMap: Record<string, Client> = {}
-    for (const c of clientsRes.items) {
+    for (const c of (clientsRes.items ?? [])) {
       clientMap[c.id] = c
     }
 
     // Group check_configs: site_id -> client_id -> [check_config_ids]
     const grouping: Record<string, Record<string, string[]>> = {}
-    for (const cc of ccRes.items) {
+    for (const cc of (ccRes.items ?? [])) {
       if (!grouping[cc.site_id]) grouping[cc.site_id] = {}
       if (!grouping[cc.site_id]![cc.client_id]) grouping[cc.site_id]![cc.client_id] = []
       grouping[cc.site_id]![cc.client_id]!.push(cc.id)
@@ -70,6 +70,7 @@ onMounted(async () => {
               const reportsArr = await Promise.all(
                 ccIds.map((ccId) =>
                   listReports({ site_id: site.id, type: 1, check_config_id: ccId, page: 1, page_size: 1 })
+                    .then((r) => r ?? [] as Report[])
                     .catch(() => [] as Report[]),
                 ),
               )
@@ -94,7 +95,7 @@ onMounted(async () => {
               clientSiteInfos.value[key] = {
                 clientName,
                 monthlyUptime: uptime,
-                recentChecks: checksRes.items,
+                recentChecks: checksRes.items ?? [],
               }
             } catch {
               clientSiteInfos.value[key] = { clientName, monthlyUptime: 0, recentChecks: [] }
