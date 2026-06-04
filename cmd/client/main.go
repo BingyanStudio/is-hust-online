@@ -17,7 +17,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -139,7 +141,22 @@ func main() {
 			for {
 				task, err := stream.Recv()
 				if err != nil {
-					slog.Warn("stream ended", "error", err)
+					if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
+						slog.Warn("client not registered, re-registering")
+						if regResp, regErr := cmClient.Register(ctx, &myproto.RegisterRequest{
+							ClientInfo: &myproto.ClientInfo{
+								Ip:           ip,
+								Capabilities: caps,
+							},
+						}); regErr != nil {
+							slog.Error("failed to re-register", "error", regErr)
+						} else if regResp.Success {
+							clientID = regResp.ClientId
+							slog.Info("re-registered successfully", "client_id", clientID)
+						}
+					} else {
+						slog.Warn("stream ended", "error", err)
+					}
 					break
 				}
 				go performCheck(csClient, clientID, token, task)
